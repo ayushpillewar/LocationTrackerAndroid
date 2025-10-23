@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Location Tracker</string>
+
+    <!-- Activity Titles -->
+    <string name="pin_lock_title">PIN Lock</string>
+    <string name="main_activity_title">Location Tracker</string>
+
+    <!-- Common Strings -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+    <string name="settings">Settings</string>
+
+    <!-- Permission Strings -->
+    <string name="permission_location_rationale">Location permission is required to track your location and send updates.</string>
+    <string name="permission_sms_rationale">SMS permission is required to send location updates to the specified phone number.</string>
+    <string name="permission_notification_rationale">Notification permission is required to show tracking status in the notification bar.</string>
+</resources>
