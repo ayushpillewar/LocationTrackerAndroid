@@ -15,6 +15,8 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.telephony.SmsManager;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -114,7 +116,7 @@ public class LocationTrackingService extends Service {
     private void setupLocationCallback() {
         locationCallback = new LocationCallback() {
             @Override
-            public void onLocationResult(LocationResult locationResult) {
+            public void onLocationResult(@NonNull LocationResult locationResult) {
                 if (locationResult == null) return;
 
                 Location location = locationResult.getLastLocation();

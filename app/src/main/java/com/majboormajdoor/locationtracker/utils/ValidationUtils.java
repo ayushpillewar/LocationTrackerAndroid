@@ -1,6 +1,5 @@
 package com.majboormajdoor.locationtracker.utils;
 
-import android.util.Patterns;
 import com.majboormajdoor.locationtracker.constants.AppConstants;
 
 /**

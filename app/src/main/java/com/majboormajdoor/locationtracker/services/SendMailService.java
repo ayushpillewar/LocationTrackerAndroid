@@ -50,10 +50,10 @@ public class SendMailService {
         message.addRecipient(Message.RecipientType.TO, new InternetAddress(toAddress));
 
         // Set Subject: subject of the email
-        message.setSubject("This is Subject");
+        message.setSubject(this.subject);
 
         // set body of the email.
-        message.setText("This is a test mail");
+        message.setText(this.message);
         // Send email.
         Transport.send(message);
         System.out.println("Mail successfully sent");

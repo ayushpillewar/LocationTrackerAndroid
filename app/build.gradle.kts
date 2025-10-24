@@ -38,6 +38,22 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("androidx.work:work-runtime:2.8.1")
     implementation("androidx.activity:activity:1.8.0")
+    implementation("androidx.fragment:fragment:1.6.2")
+    implementation("androidx.navigation:navigation-fragment:2.7.5")
+    implementation("androidx.navigation:navigation-ui:2.7.5")
+
+    // AWS Cognito SDK
+    implementation("com.amplifyframework:aws-auth-cognito:2.14.5")
+    implementation("com.amplifyframework:core:2.14.5")
+
+    // Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+    // Credential Manager for modern authentication
+    implementation("androidx.credentials:credentials:1.2.2")
+    implementation("androidx.credentials:credentials-play-services-auth:1.2.2")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
+
     // https://mvnrepository.com/artifact/javax.mail/mail
     implementation("javax.mail:mail:1.4.1")
     implementation(libs.play.services.location)
