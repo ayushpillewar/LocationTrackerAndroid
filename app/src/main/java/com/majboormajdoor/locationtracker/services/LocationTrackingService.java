@@ -13,7 +13,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.telephony.SmsManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -28,6 +27,8 @@ import com.google.android.gms.location.Priority;
 import com.majboormajdoor.locationtracker.R;
 import com.majboormajdoor.locationtracker.activities.MainActivity;
 import com.majboormajdoor.locationtracker.constants.AppConstants;
+import com.majboormajdoor.locationtracker.utils.PreferenceManager;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -43,12 +44,13 @@ public class LocationTrackingService extends Service {
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
     private LocationRequest locationRequest;
-    private Handler smsHandler;
-    private Runnable smsRunnable;
+    private Handler apiHandler;
+    private Runnable apiRunnable;
+    private ApiService apiService;
 
     private String targetPhoneNumber;
     private int timeIntervalMinutes;
-    private Location lastKnownLocation;
+    private android.location.Location lastKnownLocation;
 
     @Override
     public void onCreate() {
@@ -56,7 +58,8 @@ public class LocationTrackingService extends Service {
         Log.d(TAG, "Service created");
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        smsHandler = new Handler(Looper.getMainLooper());
+        apiHandler = new Handler(Looper.getMainLooper());
+        apiService = new ApiService();
 
         createNotificationChannel();
         setupLocationRequest();
@@ -139,74 +142,83 @@ public class LocationTrackingService extends Service {
         }
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
-        scheduleLocationSMS();
+        scheduleLocationAPI();
 
-        Log.d(TAG, "Location tracking started for number: " + targetPhoneNumber +
-              " with interval: " + timeIntervalMinutes + " minutes");
+        Log.d(TAG, "Location tracking started, will send to API every " + timeIntervalMinutes + " minutes");
     }
 
     /**
-     * Stop location tracking and SMS scheduling
+     * Stop location tracking and API scheduling
      */
     private void stopLocationTracking() {
         if (fusedLocationClient != null) {
             fusedLocationClient.removeLocationUpdates(locationCallback);
         }
 
-        if (smsHandler != null && smsRunnable != null) {
-            smsHandler.removeCallbacks(smsRunnable);
+        if (apiHandler != null && apiRunnable != null) {
+            apiHandler.removeCallbacks(apiRunnable);
         }
 
         Log.d(TAG, "Location tracking stopped");
     }
 
     /**
-     * Schedule periodic SMS sending
+     * Schedule periodic API calls to send location data
      */
-    private void scheduleLocationSMS() {
-        smsRunnable = new Runnable() {
+    private void scheduleLocationAPI() {
+        apiRunnable = new Runnable() {
             @Override
             public void run() {
-                sendLocationSMS();
-                // Schedule next SMS
-                smsHandler.postDelayed(this, timeIntervalMinutes * 60 * 1000L);
+                sendLocationToAPI();
+                // Schedule next API call
+                apiHandler.postDelayed(this, timeIntervalMinutes * 60 * 1000L);
             }
         };
 
-        // Send first SMS immediately
-        smsHandler.post(smsRunnable);
+        // Send first location data immediately
+        apiHandler.post(apiRunnable);
     }
 
     /**
-     * Send SMS with current location
+     * Send location data to API endpoint
      */
-    private void sendLocationSMS() {
+    private void sendLocationToAPI() {
         if (lastKnownLocation == null) {
-            Log.w(TAG, "No location available for SMS");
+            Log.w(TAG, "No location available for API call");
             return;
         }
 
-        if (targetPhoneNumber == null || targetPhoneNumber.isEmpty()) {
-            Log.e(TAG, "No target phone number set");
-            return;
-        }
+        // Run API call on background thread to avoid NetworkOnMainThreadException
+        new Thread(() -> {
+            try {
+                double latitude = lastKnownLocation.getLatitude();
+                double longitude = lastKnownLocation.getLongitude();
+                String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
 
-        try {
-            double latitude = lastKnownLocation.getLatitude();
-            double longitude = lastKnownLocation.getLongitude();
-            String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+                // Create Location DTO object
+                com.majboormajdoor.locationtracker.dto.Location locationData = new com.majboormajdoor.locationtracker.dto.Location();
+                locationData.setLatitude(latitude);
+                locationData.setLongitude(longitude);
+                locationData.setTimestamp(timestamp);
+                locationData.setEmail(PreferenceManager.getInstance(getApplicationContext()).getEmailAddress());
 
-            String message = String.format(Locale.getDefault(), AppConstants.SMS_MESSAGE_TEMPLATE,
-                latitude, longitude, timestamp);
+                // Send location data to API
+                apiService.postLocation(locationData, new ApiService.ApiCallback() {
+                    @Override
+                    public void onSuccess(String message) {
+                        Log.d(TAG, "Location sent to API successfully: " + latitude + ", " + longitude);
+                    }
 
-            SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(targetPhoneNumber, null, message, null, null);
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, "Failed to send location to API: " + error);
+                    }
+                });
 
-            Log.d(TAG, "SMS sent to " + targetPhoneNumber + " with location: " + latitude + ", " + longitude);
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error sending SMS: " + e.getMessage(), e);
-        }
+            } catch (Exception e) {
+                Log.e(TAG, "Error preparing location data for API: " + e.getMessage(), e);
+            }
+        }).start();
     }
 
     /**

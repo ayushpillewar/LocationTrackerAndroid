@@ -29,7 +29,7 @@ public class PinLockActivity extends AppCompatActivity {
     private TextView tvWelcomeTitle, tvWelcomeSubtitle;
     private TextInputEditText etEmail, etPassword, etConfirmPassword, etVerificationCode;
     private TextInputLayout layoutEmail, layoutPassword, layoutConfirmPassword, layoutVerificationCode;
-    private Button btnPrimaryAction, btnResendCode, btnGoogleSignIn;
+    private Button btnPrimaryAction, btnResendCode;
     private TextView tvForgotPassword, tvSwitchModePrompt, tvSwitchMode;
 
     // Authentication Services
@@ -81,7 +81,6 @@ public class PinLockActivity extends AppCompatActivity {
 
         btnPrimaryAction = findViewById(R.id.btn_primary_action);
         btnResendCode = findViewById(R.id.btn_resend_code);
-        btnGoogleSignIn = findViewById(R.id.btn_google_signin);
 
         tvForgotPassword = findViewById(R.id.tv_forgot_password);
         tvSwitchModePrompt = findViewById(R.id.tv_switch_mode_prompt);
@@ -126,7 +125,6 @@ public class PinLockActivity extends AppCompatActivity {
      */
     private void setupClickListeners() {
         btnPrimaryAction.setOnClickListener(v -> handlePrimaryAction());
-        btnGoogleSignIn.setOnClickListener(v -> handleGoogleSignIn());
         btnResendCode.setOnClickListener(v -> handleResendCode());
         tvForgotPassword.setOnClickListener(v -> switchToMode(AuthMode.FORGOT_PASSWORD));
         tvSwitchMode.setOnClickListener(v -> handleSwitchMode());
@@ -363,33 +361,7 @@ public class PinLockActivity extends AppCompatActivity {
             });
     }
 
-    /**
-     * Handle Google Sign-In
-     */
-    private void handleGoogleSignIn() {
-        showLoading(true);
 
-        googleSignInService.signIn(this, new GoogleSignInService.GoogleSignInCallback() {
-            @Override
-            public void onSuccess(String idToken, String email, String displayName) {
-                showLoading(false);
-                showSuccess("Signed in with Google successfully!");
-                navigateToMainActivity();
-            }
-
-            @Override
-            public void onError(String error) {
-                showLoading(false);
-                showError("Google Sign-In failed: " + error);
-            }
-
-            @Override
-            public void onCancelled() {
-                showLoading(false);
-                showMessage("Google Sign-In cancelled");
-            }
-        });
-    }
 
     /**
      * Handle resend verification code
@@ -459,7 +431,6 @@ public class PinLockActivity extends AppCompatActivity {
                 tvForgotPassword.setVisibility(View.VISIBLE);
                 tvSwitchModePrompt.setText("Don't have an account? ");
                 tvSwitchMode.setText("Sign Up");
-                btnGoogleSignIn.setVisibility(View.VISIBLE);
                 break;
 
             case SIGN_UP:
@@ -474,7 +445,6 @@ public class PinLockActivity extends AppCompatActivity {
                 tvForgotPassword.setVisibility(View.GONE);
                 tvSwitchModePrompt.setText("Already have an account? ");
                 tvSwitchMode.setText("Sign In");
-                btnGoogleSignIn.setVisibility(View.VISIBLE);
                 break;
 
             case EMAIL_VERIFICATION:
@@ -489,7 +459,6 @@ public class PinLockActivity extends AppCompatActivity {
                 tvForgotPassword.setVisibility(View.GONE);
                 tvSwitchModePrompt.setText("Didn't receive code? ");
                 tvSwitchMode.setText("Resend");
-                btnGoogleSignIn.setVisibility(View.GONE);
                 break;
 
             case FORGOT_PASSWORD:
@@ -504,7 +473,6 @@ public class PinLockActivity extends AppCompatActivity {
                 tvForgotPassword.setVisibility(View.GONE);
                 tvSwitchModePrompt.setText("Remember your password? ");
                 tvSwitchMode.setText("Sign In");
-                btnGoogleSignIn.setVisibility(View.GONE);
                 break;
 
             case RESET_PASSWORD:
@@ -519,7 +487,6 @@ public class PinLockActivity extends AppCompatActivity {
                 tvForgotPassword.setVisibility(View.GONE);
                 tvSwitchModePrompt.setText("Remember your password? ");
                 tvSwitchMode.setText("Sign In");
-                btnGoogleSignIn.setVisibility(View.GONE);
                 break;
         }
     }
@@ -685,7 +652,6 @@ public class PinLockActivity extends AppCompatActivity {
      */
     private void showLoading(boolean isLoading) {
         btnPrimaryAction.setEnabled(!isLoading);
-        btnGoogleSignIn.setEnabled(!isLoading);
         btnResendCode.setEnabled(!isLoading);
 
         if (isLoading) {

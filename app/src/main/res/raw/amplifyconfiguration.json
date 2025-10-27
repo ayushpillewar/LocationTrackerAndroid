@@ -11,9 +11,9 @@
         },
         "CognitoUserPool": {
           "Default": {
-            "PoolId": "a",
-            "AppClientId": "5",
-            "Region": "a"
+            "PoolId": "ap-south-1_a4laup1vb",
+            "AppClientId": "3ihfa3gj922q1scaq8osuab5jp",
+            "Region": "ap-south-1"
           }
         }
       }

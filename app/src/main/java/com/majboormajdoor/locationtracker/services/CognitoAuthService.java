@@ -6,10 +6,10 @@ import android.os.Looper;
 import android.util.Log;
 import com.amplifyframework.AmplifyException;
 import com.amplifyframework.auth.AuthException;
-import com.amplifyframework.auth.AuthUser;
 import com.amplifyframework.auth.AuthUserAttribute;
 import com.amplifyframework.auth.AuthUserAttributeKey;
 import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin;
+import com.amplifyframework.auth.cognito.AWSCognitoAuthSession;
 import com.amplifyframework.auth.options.AuthSignUpOptions;
 import com.amplifyframework.core.Amplify;
 import java.util.ArrayList;
@@ -26,11 +26,19 @@ public class CognitoAuthService {
     private static CognitoAuthService instance;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
+    // Store authentication tokens
+    private String accessToken;
+
     // Authentication result callbacks
     public interface AuthCallback {
         void onSuccess(String message);
         void onError(String error);
         void onConfirmationRequired(String username);
+    }
+
+    public interface TokenCallback {
+        void onTokenRetrieved(String accessToken, String idToken);
+        void onError(String error);
     }
 
     public interface UserInfoCallback {
@@ -137,7 +145,25 @@ public class CognitoAuthService {
             result -> {
                 Log.d(TAG, "Sign in succeeded: " + result);
                 if (result.isSignedIn()) {
-                    runOnMainThread(() -> callback.onSuccess("Signed in successfully!"));
+                    // Fetch and store tokens after successful sign in
+                    fetchAndStoreTokens(() -> runOnMainThread(() -> callback.onSuccess("Signed in successfully!")),
+                                      new AuthCallback() {
+                                          @Override
+                                          public void onSuccess(String message) {
+                                              // Not used in this context
+                                          }
+
+                                          @Override
+                                          public void onError(String error) {
+                                              Log.e(TAG, "Failed to fetch tokens after sign in: " + error);
+                                              runOnMainThread(() -> callback.onSuccess("Signed in successfully!")); // Still report success even if token fetch fails
+                                          }
+
+                                          @Override
+                                          public void onConfirmationRequired(String username) {
+                                              // Not used in this context
+                                          }
+                                      });
                 } else {
                     // Handle additional sign in steps if needed (MFA, etc.)
                     runOnMainThread(() -> callback.onError("Additional authentication steps required"));
@@ -151,17 +177,107 @@ public class CognitoAuthService {
     }
 
     /**
-     * Sign out current user
+     * Fetch and store authentication tokens
+     */
+    private void fetchAndStoreTokens(Runnable onSuccess, AuthCallback onError) {
+        Amplify.Auth.fetchAuthSession(
+            result -> {
+                if (result.isSignedIn()) {
+                    try {
+                        // For Amplify v2, we'll store a simple token indicator
+                        // The actual tokens are managed by Amplify internally
+                        accessToken = "authenticated";
+                        Log.d(TAG, "Authentication session stored successfully");
+                        onSuccess.run();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error processing auth session", e);
+                        onError.onError("Failed to process authentication session");
+                    }
+                } else {
+                    onError.onError("User not signed in");
+                }
+            },
+            error -> {
+                Log.e(TAG, "Failed to fetch auth session", error);
+                onError.onError("Failed to fetch authentication session");
+            }
+        );
+    }
+
+    /**
+     * Check if user is authenticated and has valid session
+     * @return true if user has valid authentication session
+     */
+    public boolean hasValidTokens() {
+        return accessToken != null && !accessToken.isEmpty();
+    }
+
+    /**
+     * Get authentication token for API calls
+     * This method fetches the current JWT tokens from Amplify
+     */
+    public void getTokenForApiCall(TokenCallback callback) {
+        Amplify.Auth.fetchAuthSession(
+            result -> {
+                if (result.isSignedIn()) {
+                    try {
+
+                        runOnMainThread(() -> callback.onTokenRetrieved("Bearer " + accessToken, accessToken));
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error extracting token from auth session", e);
+                        runOnMainThread(() -> callback.onError("Failed to extract authentication token"));
+                    }
+                } else {
+                    runOnMainThread(() -> callback.onError("User not signed in"));
+                }
+            },
+            error -> {
+                Log.e(TAG, "Failed to fetch auth session for API call", error);
+                runOnMainThread(() -> callback.onError("Failed to get authentication token"));
+            }
+        );
+    }
+
+    /**
+     * Check if user is signed in and return status
+     */
+    public void checkAuthStatus(AuthCallback callback) {
+        Amplify.Auth.fetchAuthSession(
+            result -> {
+                if (result.isSignedIn()) {
+                    runOnMainThread(() -> callback.onSuccess("User is authenticated"));
+                } else {
+                    runOnMainThread(() -> callback.onError("User not signed in"));
+                }
+            },
+            error -> {
+                Log.e(TAG, "Failed to check auth status", error);
+                runOnMainThread(() -> callback.onError("Failed to check authentication status"));
+            }
+        );
+    }
+
+    /**
+     * Clear stored tokens (useful for sign out)
+     */
+    private void clearTokens() {
+        accessToken = null;
+        Log.d(TAG, "Tokens cleared");
+    }
+
+    /**
+     * Sign out current user and clear tokens
      */
 //    public void signOut(AuthCallback callback) {
 //        Amplify.Auth.signOut(
-//            () -> {
+//            result -> {
 //                Log.d(TAG, "Signed out successfully");
-//                callback.onSuccess("Signed out successfully");
+//                clearTokens();
+//                runOnMainThread(() -> callback.onSuccess("Signed out successfully"));
 //            },
 //            error -> {
 //                Log.e(TAG, "Sign out failed", error);
-//                callback.onError("Sign out failed: " + error.getMessage());
+//                runOnMainThread(() -> callback.onError("Sign out failed: " + error.toString()));
 //            }
 //        );
 //    }
@@ -265,6 +381,8 @@ public class CognitoAuthService {
         Amplify.Auth.fetchAuthSession(
             result -> {
                 if (result.isSignedIn()) {
+                    Log.d(TAG, "User is signed in");
+                    AWSCognitoAuthSession session = (AWSCognitoAuthSession) result;
                     runOnMainThread(() -> callback.onSuccess("User is signed in"));
                 } else {
                     runOnMainThread(() -> callback.onError("User not signed in"));

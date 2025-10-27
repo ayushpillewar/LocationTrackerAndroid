@@ -11,6 +11,7 @@ public class AppConstants {
     public static final String PREF_PIN_KEY = "user_pin";
     public static final String PREF_IS_FIRST_LAUNCH = "is_first_launch";
     public static final String PREF_PHONE_NUMBER = "phone_number";
+    public static final String PREF_EMAIL_ADDRESS = "email_address";
     public static final String PREF_TIME_INTERVAL = "time_interval";
 
     // PIN related constants
@@ -18,9 +19,14 @@ public class AppConstants {
     public static final String DEFAULT_PIN = "";
 
     // Location tracking constants
-    public static final int MIN_TIME_INTERVAL_MINUTES = 1;
-    public static final int MAX_TIME_INTERVAL_MINUTES = 60;
-    public static final int DEFAULT_TIME_INTERVAL_MINUTES = 15;
+    public static final int MIN_TIME_INTERVAL_HOURS = 1;
+    public static final int MAX_TIME_INTERVAL_HOURS = 12;
+    public static final int DEFAULT_TIME_INTERVAL_HOURS = 1;
+
+    // Keep minute constants for backward compatibility and internal calculations
+    public static final int MIN_TIME_INTERVAL_MINUTES = MIN_TIME_INTERVAL_HOURS * 60;
+    public static final int MAX_TIME_INTERVAL_MINUTES = MAX_TIME_INTERVAL_HOURS * 60;
+    public static final int DEFAULT_TIME_INTERVAL_MINUTES = DEFAULT_TIME_INTERVAL_HOURS * 60;
 
     // Location service constants
     public static final long LOCATION_UPDATE_INTERVAL = 10000; // 10 seconds
@@ -36,6 +42,7 @@ public class AppConstants {
 
     // Intent extras
     public static final String EXTRA_PHONE_NUMBER = "phone_number";
+    public static final String EXTRA_EMAIL_ADDRESS = "email_address";
     public static final String EXTRA_TIME_INTERVAL = "time_interval";
 
     // Permission request codes

@@ -76,6 +76,22 @@ public class PreferenceManager {
     }
 
     /**
+     * Save email address
+     */
+    public void saveEmailAddress(String emailAddress) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(AppConstants.PREF_EMAIL_ADDRESS, emailAddress);
+        editor.apply();
+    }
+
+    /**
+     * Get saved email address
+     */
+    public String getEmailAddress() {
+        return sharedPreferences.getString(AppConstants.PREF_EMAIL_ADDRESS, "");
+    }
+
+    /**
      * Save time interval
      */
     public void saveTimeInterval(int intervalMinutes) {

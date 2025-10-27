@@ -1,6 +1,9 @@
 package com.majboormajdoor.locationtracker.utils;
-
 import com.majboormajdoor.locationtracker.constants.AppConstants;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Utility class for input validation
@@ -30,6 +33,19 @@ public class ValidationUtils {
 
         // Check if it's a valid length (10-15 digits typically)
         return cleanPhone.length() >= 10 && cleanPhone.length() <= 15;
+    }
+
+    /**
+     * Validate email address format
+     */
+    public static boolean isValidEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
+
+        // Basic email validation pattern
+        String emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        return email.matches(emailPattern);
     }
 
     /**
@@ -78,5 +94,11 @@ public class ValidationUtils {
     public static String cleanPhoneNumber(String phoneNumber) {
         if (phoneNumber == null) return "";
         return phoneNumber.replaceAll("[^\\d+]", "");
+    }
+
+    public static String generateISO8601BasicFormat(){
+        Date now = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat( "yyyyMMdd'T'HHmmss'Z'", Locale.US);
+        return sdf.format(now);
     }
 }

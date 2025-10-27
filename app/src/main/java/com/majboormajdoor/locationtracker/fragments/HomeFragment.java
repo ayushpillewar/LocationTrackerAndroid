@@ -1,6 +1,7 @@
 package com.majboormajdoor.locationtracker.fragments;
 
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,26 +12,35 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.material.textfield.TextInputEditText;
 import com.majboormajdoor.locationtracker.R;
 import com.majboormajdoor.locationtracker.constants.AppConstants;
+import com.majboormajdoor.locationtracker.services.ApiService;
 import com.majboormajdoor.locationtracker.services.LocationTrackingService;
 import com.majboormajdoor.locationtracker.utils.PermissionUtils;
 import com.majboormajdoor.locationtracker.utils.PreferenceManager;
 import com.majboormajdoor.locationtracker.utils.ValidationUtils;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Fragment for home screen with location tracking configuration
  */
 public class HomeFragment extends Fragment {
 
-    private TextInputEditText etPhoneNumber;
+    private TextInputEditText etEmailAddress;
     private SeekBar seekBarInterval;
     private TextView tvIntervalValue, tvIntervalLabel;
-    private Button btnStartTracking, btnStopTracking;
+    private Button btnStartTracking, btnStopTracking, btnTestLocation;
 
     private PreferenceManager preferenceManager;
+    private FusedLocationProviderClient fusedLocationClient;
+    private ApiService apiService;
     private boolean isTrackingActive = false;
 
     @Nullable
@@ -59,33 +69,36 @@ public class HomeFragment extends Fragment {
      * Initialize all views
      */
     private void initializeViews(View view) {
-        etPhoneNumber = view.findViewById(R.id.et_phone_number);
+        etEmailAddress = view.findViewById(R.id.et_email_address);
         seekBarInterval = view.findViewById(R.id.seekbar_interval);
         tvIntervalValue = view.findViewById(R.id.tv_interval_value);
         tvIntervalLabel = view.findViewById(R.id.tv_interval_label);
         btnStartTracking = view.findViewById(R.id.btn_start_tracking);
         btnStopTracking = view.findViewById(R.id.btn_stop_tracking);
+        btnTestLocation = view.findViewById(R.id.btn_test_location);
     }
 
     /**
-     * Initialize preference manager
+     * Initialize preference manager and services
      */
     private void initializePreferences() {
         preferenceManager = PreferenceManager.getInstance(requireContext());
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+        apiService = new ApiService();
     }
 
     /**
      * Setup time interval seekbar
      */
     private void setupSeekBar() {
-        seekBarInterval.setMax(AppConstants.MAX_TIME_INTERVAL_MINUTES - AppConstants.MIN_TIME_INTERVAL_MINUTES);
-        seekBarInterval.setProgress(AppConstants.DEFAULT_TIME_INTERVAL_MINUTES - AppConstants.MIN_TIME_INTERVAL_MINUTES);
+        seekBarInterval.setMax(AppConstants.MAX_TIME_INTERVAL_HOURS - AppConstants.MIN_TIME_INTERVAL_HOURS);
+        seekBarInterval.setProgress(AppConstants.DEFAULT_TIME_INTERVAL_HOURS - AppConstants.MIN_TIME_INTERVAL_HOURS);
 
         seekBarInterval.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                int intervalMinutes = AppConstants.MIN_TIME_INTERVAL_MINUTES + progress;
-                updateIntervalDisplay(intervalMinutes);
+                int intervalHours = AppConstants.MIN_TIME_INTERVAL_HOURS + progress;
+                updateIntervalDisplay(intervalHours);
             }
 
             @Override
@@ -93,9 +106,9 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                // Save the selected interval
-                int intervalMinutes = AppConstants.MIN_TIME_INTERVAL_MINUTES + seekBar.getProgress();
-                preferenceManager.saveTimeInterval(intervalMinutes);
+                // Save the selected interval (convert hours to minutes for service compatibility)
+                int intervalHours = AppConstants.MIN_TIME_INTERVAL_HOURS + seekBar.getProgress();
+                preferenceManager.saveTimeInterval(intervalHours * 60);
             }
         });
     }
@@ -106,13 +119,14 @@ public class HomeFragment extends Fragment {
     private void setupClickListeners() {
         btnStartTracking.setOnClickListener(v -> startLocationTracking());
         btnStopTracking.setOnClickListener(v -> stopLocationTracking());
+        btnTestLocation.setOnClickListener(v -> testLocationSending());
 
-        // Save phone number when focus is lost
-        etPhoneNumber.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus && etPhoneNumber.getText() != null) {
-                String phoneNumber = etPhoneNumber.getText().toString().trim();
-                if (!phoneNumber.isEmpty() && ValidationUtils.isValidPhoneNumber(phoneNumber)) {
-                    preferenceManager.savePhoneNumber(ValidationUtils.cleanPhoneNumber(phoneNumber));
+        // Save email address when focus is lost
+        etEmailAddress.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus && etEmailAddress.getText() != null) {
+                String emailAddress = etEmailAddress.getText().toString().trim();
+                if (!emailAddress.isEmpty() && ValidationUtils.isValidEmail(emailAddress)) {
+                    preferenceManager.saveEmailAddress(emailAddress);
                 }
             }
         });
@@ -122,26 +136,35 @@ public class HomeFragment extends Fragment {
      * Load saved data from preferences
      */
     private void loadSavedData() {
-        // Load saved phone number
-        String savedPhone = preferenceManager.getPhoneNumber();
-        if (!savedPhone.isEmpty()) {
-            etPhoneNumber.setText(ValidationUtils.formatPhoneNumber(savedPhone));
+        // Load saved email address
+        String savedEmail = preferenceManager.getEmailAddress();
+        if (!savedEmail.isEmpty()) {
+            etEmailAddress.setText(savedEmail);
         }
 
-        // Load saved time interval
-        int savedInterval = preferenceManager.getTimeInterval();
-        seekBarInterval.setProgress(savedInterval - AppConstants.MIN_TIME_INTERVAL_MINUTES);
-        updateIntervalDisplay(savedInterval);
+        // Load saved time interval (stored in minutes, convert to hours for display)
+        int savedIntervalMinutes = preferenceManager.getTimeInterval();
+        int savedIntervalHours = savedIntervalMinutes / 60;
+
+        // Ensure the value is within our new hour range
+        if (savedIntervalHours < AppConstants.MIN_TIME_INTERVAL_HOURS) {
+            savedIntervalHours = AppConstants.DEFAULT_TIME_INTERVAL_HOURS;
+        } else if (savedIntervalHours > AppConstants.MAX_TIME_INTERVAL_HOURS) {
+            savedIntervalHours = AppConstants.MAX_TIME_INTERVAL_HOURS;
+        }
+
+        seekBarInterval.setProgress(savedIntervalHours - AppConstants.MIN_TIME_INTERVAL_HOURS);
+        updateIntervalDisplay(savedIntervalHours);
     }
 
     /**
      * Update interval display text
      */
-    private void updateIntervalDisplay(int intervalMinutes) {
-        tvIntervalValue.setText(String.valueOf(intervalMinutes));
+    private void updateIntervalDisplay(int intervalHours) {
+        tvIntervalValue.setText(String.valueOf(intervalHours));
 
-        String label = intervalMinutes == 1 ? "minute" : "minutes";
-        String formattedText = String.format("Send location every %d %s", intervalMinutes, label);
+        String label = intervalHours == 1 ? "hour" : "hours";
+        String formattedText = String.format(java.util.Locale.getDefault(), "Send location every %d %s", intervalHours, label);
         tvIntervalLabel.setText(formattedText);
     }
 
@@ -149,17 +172,17 @@ public class HomeFragment extends Fragment {
      * Start location tracking service
      */
     private void startLocationTracking() {
-        if (etPhoneNumber.getText() == null) {
-            showError("Please enter a phone number");
+        if (etEmailAddress.getText() == null) {
+            showError("Please enter an email address");
             return;
         }
 
-        String phoneNumber = etPhoneNumber.getText().toString().trim();
+        String emailAddress = etEmailAddress.getText().toString().trim();
 
-        // Validate phone number
-        if (!ValidationUtils.isValidPhoneNumber(phoneNumber)) {
-            showError(AppConstants.ERROR_INVALID_PHONE);
-            etPhoneNumber.requestFocus();
+        // Validate email address
+        if (!ValidationUtils.isValidEmail(emailAddress)) {
+            showError("Please enter a valid email address");
+            etEmailAddress.requestFocus();
             return;
         }
 
@@ -170,17 +193,17 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        // Save phone number
-        String cleanPhone = ValidationUtils.cleanPhoneNumber(phoneNumber);
-        preferenceManager.savePhoneNumber(cleanPhone);
+        // Save email address
+        preferenceManager.saveEmailAddress(emailAddress);
 
-        // Get time interval
-        int intervalMinutes = AppConstants.MIN_TIME_INTERVAL_MINUTES + seekBarInterval.getProgress();
+        // Get time interval (convert hours to minutes for service)
+        int intervalHours = AppConstants.MIN_TIME_INTERVAL_HOURS + seekBarInterval.getProgress();
+        int intervalMinutes = intervalHours * 60;
 
         // Start the service
         Intent serviceIntent = new Intent(requireContext(), LocationTrackingService.class);
         serviceIntent.setAction(AppConstants.SERVICE_ACTION_START);
-        serviceIntent.putExtra(AppConstants.EXTRA_PHONE_NUMBER, cleanPhone);
+        serviceIntent.putExtra(AppConstants.EXTRA_EMAIL_ADDRESS, emailAddress);
         serviceIntent.putExtra(AppConstants.EXTRA_TIME_INTERVAL, intervalMinutes);
 
         // Use API level compatible service start
@@ -219,7 +242,7 @@ public class HomeFragment extends Fragment {
             btnStopTracking.setAlpha(1.0f);
 
             // Disable configuration changes while tracking
-            etPhoneNumber.setEnabled(false);
+            etEmailAddress.setEnabled(false);
             seekBarInterval.setEnabled(false);
 
         } else {
@@ -229,7 +252,7 @@ public class HomeFragment extends Fragment {
             btnStopTracking.setAlpha(0.5f);
 
             // Enable configuration changes
-            etPhoneNumber.setEnabled(true);
+            etEmailAddress.setEnabled(true);
             seekBarInterval.setEnabled(true);
         }
     }
@@ -240,11 +263,6 @@ public class HomeFragment extends Fragment {
     private void checkAndRequestPermissions() {
         if (!PermissionUtils.isLocationPermissionGranted(requireContext())) {
             PermissionUtils.requestLocationPermissions(requireActivity());
-            return;
-        }
-
-        if (!PermissionUtils.isSmsPermissionGranted(requireContext())) {
-            PermissionUtils.requestSmsPermission(requireActivity());
             return;
         }
 
@@ -265,6 +283,93 @@ public class HomeFragment extends Fragment {
      */
     private void showSuccess(String message) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Test location sending to API
+     */
+    private void testLocationSending() {
+        if (etEmailAddress.getText() == null) {
+            showError("Please enter an email address");
+            return;
+        }
+
+        String emailAddress = etEmailAddress.getText().toString().trim();
+
+        // Validate email address
+        if (!ValidationUtils.isValidEmail(emailAddress)) {
+            showError("Please enter a valid email address");
+            etEmailAddress.requestFocus();
+            return;
+        }
+
+        // Check permissions
+        if (!PermissionUtils.isLocationPermissionGranted(requireContext())) {
+            showError("Location permission is required to test location sending");
+            checkAndRequestPermissions();
+            return;
+        }
+
+        // Show loading message
+        showSuccess("Getting current location...");
+
+        // Get current location
+        if (ActivityCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            showError("Location permissions not granted");
+            return;
+        }
+
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        sendTestLocationToAPI(location, emailAddress);
+                    } else {
+                        showError("Unable to get current location. Please try again.");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    showError("Failed to get location: " + e.getMessage());
+                });
+    }
+
+    /**
+     * Send test location data to API
+     */
+    private void sendTestLocationToAPI(Location location, String emailAddress) {
+        try {
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+
+            // Create Location DTO object
+            com.majboormajdoor.locationtracker.dto.Location locationData = new com.majboormajdoor.locationtracker.dto.Location();
+            locationData.setLatitude(latitude);
+            locationData.setLongitude(longitude);
+            locationData.setTimestamp(timestamp);
+            locationData.setEmail(emailAddress); // Using email address in phone number field
+
+            // Send test location data to API
+            apiService.postLocation(locationData, new ApiService.ApiCallback() {
+                @Override
+                public void onSuccess(String message) {
+                    requireActivity().runOnUiThread(() ->
+                        showSuccess("Test location sent successfully!\nLat: " + String.format(Locale.getDefault(), "%.6f", latitude) +
+                                   ", Lng: " + String.format(Locale.getDefault(), "%.6f", longitude))
+                    );
+                }
+
+                @Override
+                public void onError(String error) {
+                    requireActivity().runOnUiThread(() ->
+                        showError("Failed to send test location: " + error)
+                    );
+                }
+            });
+
+        } catch (Exception e) {
+            showError("Error preparing test location data: " + e.getMessage());
+        }
     }
 
     @Override
