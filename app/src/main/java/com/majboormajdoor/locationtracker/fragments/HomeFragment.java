@@ -108,7 +108,7 @@ public class HomeFragment extends Fragment {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 // Save the selected interval (convert hours to minutes for service compatibility)
                 int intervalHours = AppConstants.MIN_TIME_INTERVAL_HOURS + seekBar.getProgress();
-                preferenceManager.saveTimeInterval(intervalHours * 60);
+                preferenceManager.saveTimeInterval(intervalHours * AppConstants.TIME_MULTIPLIER);
             }
         });
     }
@@ -346,8 +346,8 @@ public class HomeFragment extends Fragment {
             com.majboormajdoor.locationtracker.dto.Location locationData = new com.majboormajdoor.locationtracker.dto.Location();
             locationData.setLatitude(latitude);
             locationData.setLongitude(longitude);
-            locationData.setTimestamp(timestamp);
-            locationData.setEmail(emailAddress); // Using email address in phone number field
+            locationData.setInsertionTimestamp(timestamp);
+            locationData.setUserEmail(emailAddress); // Using email address in phone number field
 
             // Send test location data to API
             apiService.postLocation(locationData, new ApiService.ApiCallback() {

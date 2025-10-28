@@ -199,8 +199,8 @@ public class LocationTrackingService extends Service {
                 com.majboormajdoor.locationtracker.dto.Location locationData = new com.majboormajdoor.locationtracker.dto.Location();
                 locationData.setLatitude(latitude);
                 locationData.setLongitude(longitude);
-                locationData.setTimestamp(timestamp);
-                locationData.setEmail(PreferenceManager.getInstance(getApplicationContext()).getEmailAddress());
+                locationData.setInsertionTimestamp(timestamp);
+                locationData.setUserEmail(PreferenceManager.getInstance(getApplicationContext()).getEmailAddress());
 
                 // Send location data to API
                 apiService.postLocation(locationData, new ApiService.ApiCallback() {

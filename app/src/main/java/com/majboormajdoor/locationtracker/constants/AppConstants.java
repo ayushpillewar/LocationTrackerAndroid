@@ -69,6 +69,7 @@ public class AppConstants {
     public static final String SUCCESS_SERVICE_STARTED = "Location tracking started successfully.";
     public static final String SUCCESS_SERVICE_STOPPED = "Location tracking stopped.";
 
+    public static final int TIME_MULTIPLIER = 1;
     // Private constructor to prevent instantiation
     private AppConstants() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
