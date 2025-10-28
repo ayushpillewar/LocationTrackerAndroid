@@ -8,6 +8,6 @@
     <item
         android:id="@+id/navigation_cloud"
         android:icon="@android:drawable/ic_menu_upload"
-        android:title="Cloud" />
+        android:title="Location History" />
 </menu>
 

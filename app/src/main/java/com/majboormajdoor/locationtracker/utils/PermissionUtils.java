@@ -80,7 +80,6 @@ public class PermissionUtils {
      */
     public static boolean areAllPermissionsGranted(Context context) {
         return isLocationPermissionGranted(context) &&
-               isSmsPermissionGranted(context) &&
                isNotificationPermissionGranted(context);
     }
 }

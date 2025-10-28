@@ -3,18 +3,24 @@ package com.majboormajdoor.locationtracker.services;
 import android.util.Log;
 
 import com.amplifyframework.auth.cognito.AWSCognitoAuthSession;
+import com.amplifyframework.core.Amplify;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.majboormajdoor.locationtracker.dto.Location;
 import com.majboormajdoor.locationtracker.utils.ValidationUtils;
 
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpStatus;
 
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 public class ApiService {
@@ -183,6 +189,7 @@ public class ApiService {
         });
     }
 
+
     /**
      * Execute the actual HTTP GET request to fetch location history with JWT token and Amplify session authentication
      */
@@ -190,7 +197,7 @@ public class ApiService {
         // Execute network operation on background thread to avoid NetworkOnMainThreadException
         new Thread(() -> {
 
-            org.apache.hc.client5.http.classic.methods.HttpGet getRequest;
+            HttpGet getRequest;
             try {
                 AWSCognitoAuthSession cogSession = (AWSCognitoAuthSession) authSession;
                 if (cogSession.getUserPoolTokensResult().getValue() == null){
@@ -199,7 +206,8 @@ public class ApiService {
                     return;
                 }
 
-                getRequest = new org.apache.hc.client5.http.classic.methods.HttpGet(BASE_URL + "/location" );
+
+                getRequest = new HttpGet(BASE_URL + "/location" + "?userId=" + cogSession.getUserSubResult().getValue());
                 getRequest.setHeader("Content-Type", "application/json");
                 getRequest.setHeader("Authorization", cogSession.getUserPoolTokensResult().getValue().getIdToken());
                 getRequest.setHeader("X-Amz-Date", ValidationUtils.generateISO8601BasicFormat());
@@ -208,8 +216,9 @@ public class ApiService {
                 // For AWS API Gateway, we need to pass Cognito identity information
                 try {
                     // Get current user to add user context headers
-                    com.amplifyframework.core.Amplify.Auth.getCurrentUser(
+                    Amplify.Auth.getCurrentUser(
                         user -> {
+
                             // Add user identification headers for AWS API Gateway
                             getRequest.setHeader("X-Amz-User-Id", user.getUserId());
                             getRequest.setHeader("X-Amz-User-Sub", user.getUserId());
@@ -237,14 +246,14 @@ public class ApiService {
 
                     // Parse the response body
                     if (response.getEntity() != null) {
-                        String responseBody = org.apache.hc.core5.http.io.entity.EntityUtils.toString(response.getEntity());
+                        String responseBody = EntityUtils.toString(response.getEntity());
                         Log.d(TAG, "Response body: " + responseBody);
 
                         try {
                             ObjectMapper mapper = new ObjectMapper();
                             // Parse as array of Location objects
                             Location[] locations = mapper.readValue(responseBody, Location[].class);
-                            java.util.List<Location> locationList = java.util.Arrays.asList(locations);
+                            List<Location> locationList = Arrays.asList(locations);
                             callback.onSuccess(locationList);
                         } catch (Exception e) {
                             Log.e(TAG, "Error parsing location history response", e);
@@ -258,7 +267,7 @@ public class ApiService {
                     // Try to get response body for more details
                     try {
                         if (response.getEntity() != null) {
-                            String errorBody = org.apache.hc.core5.http.io.entity.EntityUtils.toString(response.getEntity());
+                            String errorBody = EntityUtils.toString(response.getEntity());
                             callback.onError("API call failed with status " + statusCode + ": " + errorBody);
                         } else {
                             callback.onError("API call failed with status " + statusCode + " (no response body)");

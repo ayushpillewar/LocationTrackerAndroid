@@ -117,11 +117,6 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        if (!PermissionUtils.isSmsPermissionGranted(this)) {
-            PermissionUtils.requestSmsPermission(this);
-            return;
-        }
-
         if (!PermissionUtils.isNotificationPermissionGranted(this)) {
             PermissionUtils.requestNotificationPermission(this);
         }

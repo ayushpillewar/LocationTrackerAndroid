@@ -32,6 +32,9 @@ import com.majboormajdoor.locationtracker.utils.PreferenceManager;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Background service for location tracking and SMS sending
@@ -48,7 +51,8 @@ public class LocationTrackingService extends Service {
     private Runnable apiRunnable;
     private ApiService apiService;
 
-    private String targetPhoneNumber;
+    private ScheduledExecutorService scheduler;
+
     private int timeIntervalMinutes;
     private android.location.Location lastKnownLocation;
 
@@ -61,6 +65,7 @@ public class LocationTrackingService extends Service {
         apiHandler = new Handler(Looper.getMainLooper());
         apiService = new ApiService();
 
+
         createNotificationChannel();
         setupLocationRequest();
         setupLocationCallback();
@@ -72,7 +77,6 @@ public class LocationTrackingService extends Service {
             String action = intent.getAction();
 
             if (AppConstants.SERVICE_ACTION_START.equals(action)) {
-                targetPhoneNumber = intent.getStringExtra(AppConstants.EXTRA_PHONE_NUMBER);
                 timeIntervalMinutes = intent.getIntExtra(AppConstants.EXTRA_TIME_INTERVAL,
                     AppConstants.DEFAULT_TIME_INTERVAL_MINUTES);
 
@@ -159,6 +163,12 @@ public class LocationTrackingService extends Service {
             apiHandler.removeCallbacks(apiRunnable);
         }
 
+        if (scheduler != null && !scheduler.isShutdown()) {
+            Log.d(TAG, "Shutting down scheduler");
+            scheduler.shutdownNow();
+            scheduler = null;
+        }
+
         Log.d(TAG, "Location tracking stopped");
     }
 
@@ -166,17 +176,24 @@ public class LocationTrackingService extends Service {
      * Schedule periodic API calls to send location data
      */
     private void scheduleLocationAPI() {
-        apiRunnable = new Runnable() {
-            @Override
-            public void run() {
-                sendLocationToAPI();
-                // Schedule next API call
-                apiHandler.postDelayed(this, timeIntervalMinutes * 60 * 1000L);
-            }
-        };
+        if (timeIntervalMinutes <= 0) {
+            timeIntervalMinutes = AppConstants.DEFAULT_TIME_INTERVAL_MINUTES;
+        }
 
-        // Send first location data immediately
-        apiHandler.post(apiRunnable);
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdownNow();
+        }
+
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleWithFixedDelay(() -> {
+            try {
+                sendLocationToAPI();
+            } catch (Exception e) {
+                Log.e(TAG, "Error running scheduled API task", e);
+            }
+        }, 0, timeIntervalMinutes * AppConstants.TIME_MULTIPLIER, TimeUnit.MINUTES);
+
+        Log.d(TAG, "Scheduler started (every " + timeIntervalMinutes + " min)");
     }
 
     /**
@@ -187,38 +204,38 @@ public class LocationTrackingService extends Service {
             Log.w(TAG, "No location available for API call");
             return;
         }
+        try {
+            double latitude = lastKnownLocation.getLatitude();
+            double longitude = lastKnownLocation.getLongitude();
+            String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
 
+            // Create Location DTO object
+            com.majboormajdoor.locationtracker.dto.Location locationData = new com.majboormajdoor.locationtracker.dto.Location();
+            locationData.setLatitude(latitude);
+            locationData.setLongitude(longitude);
+            locationData.setInsertionTimestamp(timestamp);
+            locationData.setUserEmail(PreferenceManager.getInstance(getApplicationContext()).getEmailAddress());
+
+            // Send location data to API
+            apiService.postLocation(locationData, new ApiService.ApiCallback() {
+                @Override
+                public void onSuccess(String message) {
+                    Log.d(TAG, "Location sent to API successfully: " + latitude + ", " + longitude);
+                }
+
+                @Override
+                public void onError(String error) {
+                    Log.e(TAG, "Failed to send location to API: " + error);
+                }
+            });
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error preparing location data for API: " + e.getMessage(), e);
+        }
         // Run API call on background thread to avoid NetworkOnMainThreadException
-        new Thread(() -> {
-            try {
-                double latitude = lastKnownLocation.getLatitude();
-                double longitude = lastKnownLocation.getLongitude();
-                String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-
-                // Create Location DTO object
-                com.majboormajdoor.locationtracker.dto.Location locationData = new com.majboormajdoor.locationtracker.dto.Location();
-                locationData.setLatitude(latitude);
-                locationData.setLongitude(longitude);
-                locationData.setInsertionTimestamp(timestamp);
-                locationData.setUserEmail(PreferenceManager.getInstance(getApplicationContext()).getEmailAddress());
-
-                // Send location data to API
-                apiService.postLocation(locationData, new ApiService.ApiCallback() {
-                    @Override
-                    public void onSuccess(String message) {
-                        Log.d(TAG, "Location sent to API successfully: " + latitude + ", " + longitude);
-                    }
-
-                    @Override
-                    public void onError(String error) {
-                        Log.e(TAG, "Failed to send location to API: " + error);
-                    }
-                });
-
-            } catch (Exception e) {
-                Log.e(TAG, "Error preparing location data for API: " + e.getMessage(), e);
-            }
-        }).start();
+//        new Thread(() -> {
+//
+//        }).start();
     }
 
     /**
