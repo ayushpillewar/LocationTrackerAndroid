@@ -1,5 +1,6 @@
 package com.majboormajdoor.locationtracker.activities;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -59,7 +60,7 @@ public class PinLockActivity extends AppCompatActivity {
         setupBackPressHandling();
 
         // Check if user is already signed in
-        checkExistingAuth();
+        checkExistingAuth(getApplicationContext());
     }
 
     /**
@@ -593,15 +594,25 @@ public class PinLockActivity extends AppCompatActivity {
         return true;
     }
 
+    private boolean userHasSubscription() {
+        //TODO Placeholder for actual subscription check logic
+        // Replace with real implementation as needed
+        return true; // Assume user does not have a subscription
+    }
     /**
      * Check if user is already authenticated
      */
-    private void checkExistingAuth() {
+    private void checkExistingAuth(Context context) {
         cognitoAuthService.isSignedIn(new CognitoAuthService.AuthCallback() {
             @Override
             public void onSuccess(String message) {
                 // User is already signed in, navigate to main activity
-                navigateToMainActivity();
+                if(userHasSubscription()) {
+                    navigateToMainActivity();
+                }else{
+                    navigateToSubActivity();
+                }
+
             }
 
             @Override
@@ -614,7 +625,7 @@ public class PinLockActivity extends AppCompatActivity {
             public void onConfirmationRequired(String username) {
                 // Not used for status check
             }
-        });
+        } , context);
     }
 
     /**
@@ -647,6 +658,12 @@ public class PinLockActivity extends AppCompatActivity {
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
+    private void navigateToSubActivity() {
+        Intent intent = new Intent(this, SubscriptionActivity.class);
+        startActivity(intent);
+        finish();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    }
     /**
      * UI helper methods
      */

@@ -1,5 +1,6 @@
 package com.majboormajdoor.locationtracker.services;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.amplifyframework.auth.cognito.AWSCognitoAuthSession;
@@ -7,6 +8,7 @@ import com.amplifyframework.core.Amplify;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.majboormajdoor.locationtracker.dto.Location;
+import com.majboormajdoor.locationtracker.utils.PreferenceManager;
 import com.majboormajdoor.locationtracker.utils.ValidationUtils;
 
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -158,7 +160,7 @@ public class ApiService {
     /**
      * Fetches location history from the backend
      */
-    public void getLocationHistory(LocationHistoryCallback callback) {
+    public void getLocationHistory(LocationHistoryCallback callback, Context context) {
         // First get the authentication token using CognitoAuthService for proper JWT token
         authService.getTokenForApiCall(new CognitoAuthService.TokenCallback() {
             @Override
@@ -168,7 +170,7 @@ public class ApiService {
                     result -> {
                         if (result.isSignedIn()) {
                             // Use both JWT token and session for API call
-                            executeLocationGetWithAuth(accessToken, result, callback);
+                            executeLocationGetWithAuth(accessToken, result, callback, context);
                         } else {
                             Log.e(TAG, "User not signed in");
                             callback.onError("User not signed in - please authenticate first");
@@ -193,7 +195,7 @@ public class ApiService {
     /**
      * Execute the actual HTTP GET request to fetch location history with JWT token and Amplify session authentication
      */
-    private void executeLocationGetWithAuth(String jwtToken, com.amplifyframework.auth.AuthSession authSession, LocationHistoryCallback callback) {
+    private void executeLocationGetWithAuth(String jwtToken, com.amplifyframework.auth.AuthSession authSession, LocationHistoryCallback callback, Context context) {
         // Execute network operation on background thread to avoid NetworkOnMainThreadException
         new Thread(() -> {
 
@@ -207,7 +209,7 @@ public class ApiService {
                 }
 
 
-                getRequest = new HttpGet(BASE_URL + "/location" + "?userId=" + cogSession.getUserSubResult().getValue());
+                getRequest = new HttpGet(BASE_URL + "/location" + "?userId=" + PreferenceManager.getInstance(context).getUserId());
                 getRequest.setHeader("Content-Type", "application/json");
                 getRequest.setHeader("Authorization", cogSession.getUserPoolTokensResult().getValue().getIdToken());
                 getRequest.setHeader("X-Amz-Date", ValidationUtils.generateISO8601BasicFormat());
@@ -222,7 +224,7 @@ public class ApiService {
                             // Add user identification headers for AWS API Gateway
                             getRequest.setHeader("X-Amz-User-Id", user.getUserId());
                             getRequest.setHeader("X-Amz-User-Sub", user.getUserId());
-                            getRequest.setPath(getRequest.getPath() + "?userId=" + user.getUserId());
+
                             Log.d(TAG, "Added user headers - ID: " + user.getUserId());
                         },
                         error -> Log.w(TAG, "Could not get user info: " + error)
