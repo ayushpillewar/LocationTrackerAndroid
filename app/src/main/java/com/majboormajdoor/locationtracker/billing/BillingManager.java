@@ -149,7 +149,7 @@ public class BillingManager {
             return;
         }
 
-        ProductDetails.SubscriptionOfferDetails offerDetails = offerDetailsList.get(1);
+        ProductDetails.SubscriptionOfferDetails offerDetails = offerDetailsList.get(0);
         String offerToken = offerDetails.getOfferToken();
 
         List<BillingFlowParams.ProductDetailsParams> productDetailsParamsList = new ArrayList<>();
@@ -196,12 +196,11 @@ public class BillingManager {
         if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
             // Verify the purchase
             if (verifyValidSignature(purchase.getOriginalJson(), purchase.getSignature())) {
-                // Acknowledge the purchase if it hasn't been acknowledged yet
-                if (!purchase.isAcknowledged()) {
+
+                if (grantPremiumAccess() && !purchase.isAcknowledged()) {
                     acknowledgePurchase(purchase);
                 }
-                // Grant entitlement to the user
-                grantPremiumAccess();
+
             }
         } else if (purchase.getPurchaseState() == Purchase.PurchaseState.PENDING) {
             Log.d(TAG, "Purchase is pending");
@@ -231,13 +230,14 @@ public class BillingManager {
         return true;
     }
 
-    private void grantPremiumAccess() {
+    private boolean grantPremiumAccess() {
         Log.d(TAG, "Granting premium access to user");
         // TODO: Implement your app's logic to grant premium features
         // This could include:
         // - Setting a flag in SharedPreferences
         // - Updating user status in your backend
         // - Enabling premium features in the UI
+        return true;
 
     }
 

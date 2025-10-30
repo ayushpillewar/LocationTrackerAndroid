@@ -1,5 +1,6 @@
 package com.majboormajdoor.locationtracker.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -91,8 +92,7 @@ public class SubscriptionActivity extends AppCompatActivity implements BillingMa
         if (billingResult.getResponseCode() == com.android.billingclient.api.BillingClient.BillingResponseCode.OK && purchases != null) {
             runOnUiThread(() -> {
                 Toast.makeText(this, "Subscription successful! Thank you!", Toast.LENGTH_LONG).show();
-                // You can navigate back to main activity or show success screen
-                finish();
+                navigateToMainActivity();
             });
         } else if (billingResult.getResponseCode() == com.android.billingclient.api.BillingClient.BillingResponseCode.USER_CANCELED) {
             runOnUiThread(() -> {
@@ -103,6 +103,14 @@ public class SubscriptionActivity extends AppCompatActivity implements BillingMa
                 Toast.makeText(this, "Purchase failed: " + billingResult.getDebugMessage(), Toast.LENGTH_SHORT).show();
             });
         }
+    }
+
+
+    private void navigateToMainActivity() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        finish();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     @Override

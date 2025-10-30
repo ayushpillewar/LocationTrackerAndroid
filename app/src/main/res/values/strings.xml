@@ -24,4 +24,29 @@
     <string name="start_subscription">Start Subscription</string>
     <string name="start_subscription_desc">Start subscription button</string>
     <string name="subscription_info">Payment will be processed via Google Play billing.</string>
+
+    <!-- Home / Fragment strings -->
+    <string name="how_it_works">How it works</string>
+    <string name="info_bullets">• The app will send your current location data to our secure API\n• Location updates are sent at your chosen interval.</string>
+    <string name="email_section_title">📧 Email Address</string>
+    <string name="email_section_desc">Enter the email address to associate with location tracking</string>
+    <string name="hint_email_address">Email Address</string>
+    <string name="update_interval_title">⏰ Update Interval</string>
+    <string name="send_location_every_1_hour">Send location every 1 hour</string>
+    <string name="interval_one">1</string>
+    <string name="interval_twelve">12</string>
+    <string name="frequent">Frequent</string>
+    <string name="less_frequent">Less Frequent</string>
+    <string name="controls_title">🎮 Controls</string>
+    <string name="start_tracking">Start Tracking</string>
+    <string name="stop_tracking">Stop Tracking</string>
+    <string name="test_location">Test Location</string>
+
+    <!-- Location item strings -->
+    <string name="show_on_map">Show on Map</string>
+    <string name="show_on_map_desc">Open location in Maps</string>
+    <string name="no_timestamp">No timestamp</string>
+    <string name="description_location_icon">Location icon</string>
+    <string name="lat_default">Lat: 0.000000</string>
+    <string name="lng_default">Lng: 0.000000</string>
 </resources>
