@@ -255,6 +255,7 @@ public class LocationTrackingService extends Service {
         }
     }
 
+
     /**
      * Create foreground service notification
      */

@@ -102,7 +102,7 @@ public class CloudFragment extends Fragment implements ApiService.LocationHistor
         showLoading();
 
         if (apiService != null) {
-            apiService.getLocationHistory(this);
+            apiService.getLocationHistory(this, getContext());
         } else {
             Log.e(TAG, "ApiService is null");
             showError("Service not available. Please try again.");
@@ -176,7 +176,7 @@ public class CloudFragment extends Fragment implements ApiService.LocationHistor
     @Override
     public void onError(String error) {
         Log.e(TAG, "Error fetching location history: " + error);
-        showError(error);
+        showError("Error fetching location history");
     }
 
     @Override

@@ -12,6 +12,8 @@ import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin;
 import com.amplifyframework.auth.cognito.AWSCognitoAuthSession;
 import com.amplifyframework.auth.options.AuthSignUpOptions;
 import com.amplifyframework.core.Amplify;
+import com.majboormajdoor.locationtracker.utils.PreferenceManager;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -377,12 +379,14 @@ public class CognitoAuthService {
     /**
      * Check if user is signed in
      */
-    public void isSignedIn(AuthCallback callback) {
+    public void isSignedIn(AuthCallback callback, Context context) {
         Amplify.Auth.fetchAuthSession(
             result -> {
                 if (result.isSignedIn()) {
+
                     Log.d(TAG, "User is signed in");
                     AWSCognitoAuthSession session = (AWSCognitoAuthSession) result;
+                    PreferenceManager.getInstance(context).saveUserId(session.getUserSubResult().getValue());
                     runOnMainThread(() -> callback.onSuccess("User is signed in"));
                 } else {
                     runOnMainThread(() -> callback.onError("User not signed in"));

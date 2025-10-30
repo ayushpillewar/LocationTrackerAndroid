@@ -15,4 +15,13 @@
     <string name="permission_location_rationale">Location permission is required to track your location and send updates.</string>
     <string name="permission_sms_rationale">SMS permission is required to send location updates to the specified phone number.</string>
     <string name="permission_notification_rationale">Notification permission is required to show tracking status in the notification bar.</string>
+
+    <!-- Subscription strings -->
+    <string name="subscribe_title">Subscribe</string>
+    <string name="subscribe_price">$5 / month</string>
+    <string name="subscribe_price_desc">Subscription price</string>
+    <string name="subscribe_description">Get real-time location updates and cloud storage for your tracked devices. Cancel anytime.</string>
+    <string name="start_subscription">Start Subscription</string>
+    <string name="start_subscription_desc">Start subscription button</string>
+    <string name="subscription_info">Payment will be processed via Google Play billing.</string>
 </resources>

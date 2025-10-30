@@ -4,14 +4,14 @@ plugins {
 
 android {
     namespace = "com.majboormajdoor.locationtracker"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.majboormajdoor.locationtracker"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 35
+        versionCode = 6
+        versionName = "6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -48,6 +48,7 @@ android {
 }
 
 dependencies {
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
@@ -71,6 +72,8 @@ dependencies {
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
     implementation("org.apache.httpcomponents.client5:httpclient5:5.5")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.20.0")
+    implementation("com.android.billingclient:billing:8.0.0")
+    implementation("com.google.code.gson:gson:2.13.2")
 
     // https://mvnrepository.com/artifact/javax.mail/mail
     implementation("javax.mail:mail:1.4.1")

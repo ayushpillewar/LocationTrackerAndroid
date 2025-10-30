@@ -17,6 +17,9 @@ public class PreferenceManager {
         sharedPreferences = context.getSharedPreferences(AppConstants.PREFS_NAME, Context.MODE_PRIVATE);
     }
 
+    public SharedPreferences getSharedPreferences() {
+        return sharedPreferences;
+    }
     /**
      * Singleton pattern to ensure single instance
      */
@@ -107,6 +110,15 @@ public class PreferenceManager {
         return sharedPreferences.getInt(AppConstants.PREF_TIME_INTERVAL, AppConstants.DEFAULT_TIME_INTERVAL_MINUTES);
     }
 
+    public void saveUserId(String userId) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("userId", userId);
+        editor.apply();
+    }
+
+    public String getUserId() {
+        return sharedPreferences.getString("userId", "");
+    }
     /**
      * Check if PIN is set
      */
