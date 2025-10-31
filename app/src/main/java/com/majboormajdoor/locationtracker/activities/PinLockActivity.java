@@ -15,6 +15,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.majboormajdoor.locationtracker.R;
+import com.majboormajdoor.locationtracker.billing.BillingManager;
+import com.majboormajdoor.locationtracker.dto.User;
+import com.majboormajdoor.locationtracker.services.ApiService;
 import com.majboormajdoor.locationtracker.services.CognitoAuthService;
 import com.majboormajdoor.locationtracker.services.GoogleSignInService;
 
@@ -36,6 +39,10 @@ public class PinLockActivity extends AppCompatActivity {
     // Authentication Services
     private CognitoAuthService cognitoAuthService;
     private GoogleSignInService googleSignInService;
+
+    private BillingManager billingManager;
+
+    private ApiService apiService = new ApiService();
 
     // State Management
     private enum AuthMode {
@@ -91,13 +98,20 @@ public class PinLockActivity extends AppCompatActivity {
         updateUIForMode(AuthMode.SIGN_IN);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        billingManager.endConnection();
+    }
+
     /**
      * Initialize authentication services
      */
     private void initializeServices() {
         cognitoAuthService = CognitoAuthService.getInstance();
         googleSignInService = GoogleSignInService.getInstance();
-
+        apiService = new ApiService();
+        billingManager = new BillingManager(this, null);
         // Initialize Cognito
         cognitoAuthService.initialize(this, new CognitoAuthService.AuthCallback() {
             @Override
@@ -209,7 +223,22 @@ public class PinLockActivity extends AppCompatActivity {
             public void onSuccess(String message) {
                 showLoading(false);
                 showSuccess(message);
-                navigateToMainActivity();
+                apiService.checkSubscription(getApplicationContext(), new ApiService.UserCallback() {
+                    @Override
+                    public void onSubscriptionCheckSuccess(User user) {
+                        if (userHasSubscription(user.getSubEndDate())) {
+                            navigateToMainActivity();
+                        } else {
+                            navigateToSubActivity();
+                        }
+                    }
+
+                    @Override
+                    public void onSubscriptionCheckError(String error) {
+                        navigateToSubActivity();
+                    }
+                });
+
             }
 
             @Override
@@ -244,6 +273,7 @@ public class PinLockActivity extends AppCompatActivity {
                 showLoading(false);
                 showSuccess(message);
                 pendingUsername = email;
+                ApiService.saveUserIdToPreferences(getApplicationContext());
                 switchToMode(AuthMode.EMAIL_VERIFICATION);
             }
 
@@ -483,6 +513,7 @@ public class PinLockActivity extends AppCompatActivity {
                 layoutPassword.setVisibility(View.VISIBLE);
                 layoutConfirmPassword.setVisibility(View.VISIBLE);
                 layoutVerificationCode.setVisibility(View.VISIBLE);
+
                 btnPrimaryAction.setText("Reset Password");
                 btnResendCode.setVisibility(View.GONE);
                 tvForgotPassword.setVisibility(View.GONE);
@@ -594,10 +625,19 @@ public class PinLockActivity extends AppCompatActivity {
         return true;
     }
 
-    private boolean userHasSubscription() {
-        //TODO Placeholder for actual subscription check logic
-        // Replace with real implementation as needed
-        return true; // Assume user does not have a subscription
+    private boolean userHasSubscription(String subEndDate) {
+        if (subEndDate == null || subEndDate.isEmpty()) {
+            return false;
+        }
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        try {
+            java.util.Date endDate = sdf.parse(subEndDate);
+            java.util.Date currentDate = new java.util.Date();
+            return currentDate.before(endDate);
+        } catch (java.text.ParseException e) {
+            Log.e(TAG, "Date parsing error: " + e.getMessage());
+            return false;
+        }
     }
     /**
      * Check if user is already authenticated
@@ -606,15 +646,14 @@ public class PinLockActivity extends AppCompatActivity {
         cognitoAuthService.isSignedIn(new CognitoAuthService.AuthCallback() {
             @Override
             public void onSuccess(String message) {
-                // User is already signed in, navigate to main activity
-                if(userHasSubscription()) {
-                    navigateToMainActivity();
-                }else{
-                    navigateToSubActivity();
-                }
-
+                billingManager.checkSubscriptionStatus(isActive -> {
+                    if(isActive){
+                        navigateToMainActivity();
+                    }else{
+                        navigateToSubActivity();
+                    }
+                });
             }
-
             @Override
             public void onError(String error) {
                 // User not signed in, stay on authentication screen

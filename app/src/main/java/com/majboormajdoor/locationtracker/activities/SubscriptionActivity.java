@@ -9,11 +9,16 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.QueryPurchasesParams;
 import com.majboormajdoor.locationtracker.R;
 import com.majboormajdoor.locationtracker.billing.BillingManager;
+import com.majboormajdoor.locationtracker.dto.SubscriptionRequest;
+import com.majboormajdoor.locationtracker.services.ApiService;
+import com.majboormajdoor.locationtracker.utils.PreferenceManager;
 
 import java.util.List;
 
@@ -27,11 +32,14 @@ public class SubscriptionActivity extends AppCompatActivity implements BillingMa
     private TextView tvSubscribeDesc;
     private TextView tvSubscriptionInfo;
 
+    private ApiService apiService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_subscription);
 
+        setContentView(R.layout.activity_subscription);
+        apiService = new ApiService();
         initViews();
         initBilling();
         setupClickListeners();
@@ -45,7 +53,7 @@ public class SubscriptionActivity extends AppCompatActivity implements BillingMa
         tvSubscriptionInfo = findViewById(R.id.tvSubscriptionInfo);
 
         // Disable button initially until billing is ready
-        btnStartSubscription.setEnabled(true);
+        btnStartSubscription.setEnabled(false);
     }
 
     private void initBilling() {
@@ -117,6 +125,7 @@ public class SubscriptionActivity extends AppCompatActivity implements BillingMa
     public void onProductDetailsResponse(BillingResult billingResult, List<ProductDetails> productDetailsList) {
         Log.d(TAG, "Product details response: " + billingResult.getResponseCode());
 
+
         if (billingResult.getResponseCode() == com.android.billingclient.api.BillingClient.BillingResponseCode.OK && !productDetailsList.isEmpty()) {
             runOnUiThread(() -> {
                 // Update price display with actual price from Google Play
@@ -124,6 +133,21 @@ public class SubscriptionActivity extends AppCompatActivity implements BillingMa
                 tvSubscribePrice.setText(actualPrice + " / month");
             });
         }
+
+        // Check if user already has an active subscription
+        billingManager.queryActiveSubscription(isActive -> {
+            runOnUiThread(() -> {
+                if (isActive) {
+                    PreferenceManager.getInstance(getApplicationContext()).setUserSubscriptionStatus(true);
+                    navigateToMainActivity();
+                } else {
+                    PreferenceManager.getInstance(getApplicationContext()).setUserSubscriptionStatus(false);
+                    tvSubscriptionInfo.setText("No Active Subscription");
+                    btnStartSubscription.setEnabled(true);
+                    btnStartSubscription.setText(R.string.start_subscription);
+                }
+            });
+        });
     }
 
     @Override

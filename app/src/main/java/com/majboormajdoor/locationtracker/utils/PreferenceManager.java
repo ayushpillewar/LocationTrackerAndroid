@@ -135,4 +135,23 @@ public class PreferenceManager {
         editor.clear();
         editor.apply();
     }
+
+    public boolean getUserSubscriptionStatus() {
+        return sharedPreferences.getBoolean(AppConstants.PREF_HAS_SUBSCRIPTION, false);
+    }
+    public void setUserSubscriptionStatus(boolean status) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(AppConstants.PREF_HAS_SUBSCRIPTION, status);
+        editor.apply();
+    }
+
+    public void setTrackingStatus(boolean status) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(AppConstants.TRACKING_STATUS, status);
+        editor.apply();
+    }
+
+    public boolean getTrackingStatus() {
+        return sharedPreferences.getBoolean(AppConstants.TRACKING_STATUS, false);
+    }
 }

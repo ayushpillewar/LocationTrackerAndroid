@@ -138,7 +138,10 @@ public class MainActivity extends AppCompatActivity {
             case AppConstants.PERMISSION_REQUEST_LOCATION:
                 if (allGranted) {
                     showSuccess("Location permission granted");
-                    checkAndRequestPermissions(); // Check for other permissions
+                    // Check for notification permission next (non-recursively)
+                    if (!PermissionUtils.isNotificationPermissionGranted(this)) {
+                        PermissionUtils.requestNotificationPermission(this);
+                    }
                 } else {
                     showError(AppConstants.ERROR_LOCATION_PERMISSION);
                 }
@@ -147,7 +150,6 @@ public class MainActivity extends AppCompatActivity {
             case AppConstants.PERMISSION_REQUEST_SMS:
                 if (allGranted) {
                     showSuccess("SMS permission granted");
-                    checkAndRequestPermissions(); // Check for other permissions
                 } else {
                     showError(AppConstants.ERROR_SMS_PERMISSION);
                 }

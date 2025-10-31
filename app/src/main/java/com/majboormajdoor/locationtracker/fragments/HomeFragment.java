@@ -41,7 +41,6 @@ public class HomeFragment extends Fragment {
     private PreferenceManager preferenceManager;
     private FusedLocationProviderClient fusedLocationClient;
     private ApiService apiService;
-    private boolean isTrackingActive = false;
 
     @Nullable
     @Override
@@ -91,14 +90,18 @@ public class HomeFragment extends Fragment {
      * Setup time interval seekbar
      */
     private void setupSeekBar() {
-        seekBarInterval.setMax(AppConstants.MAX_TIME_INTERVAL_HOURS - AppConstants.MIN_TIME_INTERVAL_HOURS);
-        seekBarInterval.setProgress(AppConstants.DEFAULT_TIME_INTERVAL_HOURS - AppConstants.MIN_TIME_INTERVAL_HOURS);
+        // Set up seekbar for minutes (10-minute increments from 10 to 720 minutes)
+        int maxProgress = (AppConstants.MAX_TIME_INTERVAL_MINUTES - AppConstants.MIN_TIME_INTERVAL_MINUTES) / 10;
+        seekBarInterval.setMax(maxProgress);
+
+        int defaultProgress = (AppConstants.DEFAULT_TIME_INTERVAL_MINUTES - AppConstants.MIN_TIME_INTERVAL_MINUTES) / 10;
+        seekBarInterval.setProgress(defaultProgress);
 
         seekBarInterval.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                int intervalHours = AppConstants.MIN_TIME_INTERVAL_HOURS + progress;
-                updateIntervalDisplay(intervalHours);
+                int intervalMinutes = AppConstants.MIN_TIME_INTERVAL_MINUTES + (progress * 10);
+                updateIntervalDisplay(intervalMinutes);
             }
 
             @Override
@@ -106,9 +109,9 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                // Save the selected interval (convert hours to minutes for service compatibility)
-                int intervalHours = AppConstants.MIN_TIME_INTERVAL_HOURS + seekBar.getProgress();
-                preferenceManager.saveTimeInterval(intervalHours * AppConstants.TIME_MULTIPLIER);
+                // Save the selected interval in minutes
+                int intervalMinutes = AppConstants.MIN_TIME_INTERVAL_MINUTES + (seekBar.getProgress() * 10);
+                preferenceManager.saveTimeInterval(intervalMinutes);
             }
         });
     }
@@ -142,30 +145,56 @@ public class HomeFragment extends Fragment {
             etEmailAddress.setText(savedEmail);
         }
 
-        // Load saved time interval (stored in minutes, convert to hours for display)
+        // Load saved time interval (stored in minutes)
         int savedIntervalMinutes = preferenceManager.getTimeInterval();
-        int savedIntervalHours = savedIntervalMinutes / 60;
 
-        // Ensure the value is within our new hour range
-        if (savedIntervalHours < AppConstants.MIN_TIME_INTERVAL_HOURS) {
-            savedIntervalHours = AppConstants.DEFAULT_TIME_INTERVAL_HOURS;
-        } else if (savedIntervalHours > AppConstants.MAX_TIME_INTERVAL_HOURS) {
-            savedIntervalHours = AppConstants.MAX_TIME_INTERVAL_HOURS;
+        // Ensure the value is within our new minute range and is in 10-minute increments
+        if (savedIntervalMinutes < AppConstants.MIN_TIME_INTERVAL_MINUTES) {
+            savedIntervalMinutes = AppConstants.DEFAULT_TIME_INTERVAL_MINUTES;
+        } else if (savedIntervalMinutes > AppConstants.MAX_TIME_INTERVAL_MINUTES) {
+            savedIntervalMinutes = AppConstants.MAX_TIME_INTERVAL_MINUTES;
         }
 
-        seekBarInterval.setProgress(savedIntervalHours - AppConstants.MIN_TIME_INTERVAL_HOURS);
-        updateIntervalDisplay(savedIntervalHours);
+        // Round to nearest 10-minute increment
+        savedIntervalMinutes = ((savedIntervalMinutes + 5) / 10) * 10;
+
+        // Set seekbar progress based on 10-minute increments
+        int progress = (savedIntervalMinutes - AppConstants.MIN_TIME_INTERVAL_MINUTES) / 10;
+        seekBarInterval.setProgress(progress);
+        updateIntervalDisplay(savedIntervalMinutes);
     }
 
     /**
      * Update interval display text
      */
-    private void updateIntervalDisplay(int intervalHours) {
-        tvIntervalValue.setText(String.valueOf(intervalHours));
+    private void updateIntervalDisplay(int intervalMinutes) {
+        String displayText;
+        String labelText;
 
-        String label = intervalHours == 1 ? "hour" : "hours";
-        String formattedText = String.format(java.util.Locale.getDefault(), "Send location every %d %s", intervalHours, label);
-        tvIntervalLabel.setText(formattedText);
+        if (intervalMinutes < 60) {
+            // Display in minutes
+            tvIntervalValue.setText(String.valueOf(intervalMinutes));
+            String label = intervalMinutes == 1 ? "minute" : "minutes";
+            displayText = String.valueOf(intervalMinutes);
+            labelText = String.format(java.util.Locale.getDefault(), "Send location every %d %s", intervalMinutes, label);
+        } else {
+            // Display in hours if 60 minutes or more
+            int hours = intervalMinutes / 60;
+            int remainingMinutes = intervalMinutes % 60;
+
+            if (remainingMinutes == 0) {
+                // Exact hours
+                tvIntervalValue.setText(String.valueOf(hours));
+                String label = hours == 1 ? "hour" : "hours";
+                labelText = String.format(java.util.Locale.getDefault(), "Send location every %d %s", hours, label);
+            } else {
+                // Hours and minutes
+                tvIntervalValue.setText(String.format(java.util.Locale.getDefault(), "%dh %dm", hours, remainingMinutes));
+                labelText = String.format(java.util.Locale.getDefault(), "Send location every %d hours %d minutes", hours, remainingMinutes);
+            }
+        }
+
+        tvIntervalLabel.setText(labelText);
     }
 
     /**
@@ -196,9 +225,8 @@ public class HomeFragment extends Fragment {
         // Save email address
         preferenceManager.saveEmailAddress(emailAddress);
 
-        // Get time interval (convert hours to minutes for service)
-        int intervalHours = AppConstants.MIN_TIME_INTERVAL_HOURS + seekBarInterval.getProgress();
-        int intervalMinutes = intervalHours * 60;
+        // Get time interval in minutes (10-minute increments)
+        int intervalMinutes = AppConstants.MIN_TIME_INTERVAL_MINUTES + (seekBarInterval.getProgress() * 10);
 
         // Start the service
         Intent serviceIntent = new Intent(requireContext(), LocationTrackingService.class);
@@ -212,8 +240,7 @@ public class HomeFragment extends Fragment {
         } else {
             requireContext().startService(serviceIntent);
         }
-
-        isTrackingActive = true;
+        PreferenceManager.getInstance(getContext()).setTrackingStatus(true);
         updateUI();
         showSuccess(AppConstants.SUCCESS_SERVICE_STARTED);
     }
@@ -225,8 +252,7 @@ public class HomeFragment extends Fragment {
         Intent serviceIntent = new Intent(requireContext(), LocationTrackingService.class);
         serviceIntent.setAction(AppConstants.SERVICE_ACTION_STOP);
         requireContext().startService(serviceIntent);
-
-        isTrackingActive = false;
+        PreferenceManager.getInstance(getContext()).setTrackingStatus(false);
         updateUI();
         showSuccess(AppConstants.SUCCESS_SERVICE_STOPPED);
     }
@@ -235,7 +261,7 @@ public class HomeFragment extends Fragment {
      * Update UI based on tracking state
      */
     private void updateUI() {
-        if (isTrackingActive) {
+        if (PreferenceManager.getInstance(getContext()).getTrackingStatus()) {
             btnStartTracking.setEnabled(false);
             btnStartTracking.setAlpha(0.5f);
             btnStopTracking.setEnabled(true);

@@ -69,6 +69,7 @@ public class LocationTrackingService extends Service {
         createNotificationChannel();
         setupLocationRequest();
         setupLocationCallback();
+
     }
 
     @Override
@@ -232,10 +233,6 @@ public class LocationTrackingService extends Service {
         } catch (Exception e) {
             Log.e(TAG, "Error preparing location data for API: " + e.getMessage(), e);
         }
-        // Run API call on background thread to avoid NetworkOnMainThreadException
-//        new Thread(() -> {
-//
-//        }).start();
     }
 
     /**
