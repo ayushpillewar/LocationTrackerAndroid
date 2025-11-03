@@ -397,7 +397,7 @@ public class ApiService {
             try (CloseableHttpResponse response = httpClient.execute(getRequest)) {
                 int statusCode = response.getCode();
                 if (statusCode == HttpStatus.SC_OK) {
-                    Log.d(TAG, "Location history fetched successfully - Status: " + statusCode);
+                    Log.d(TAG, "User checked successfully " + statusCode);
 
                     // Parse the response body
                     if (response.getEntity() != null) {
@@ -410,14 +410,14 @@ public class ApiService {
                             User user = mapper.readValue(responseBody, User.class);
                             callback.onSubscriptionCheckSuccess(user);
                         } catch (Exception e) {
-                            Log.e(TAG, "Error parsing location history response", e);
-                            callback.onSubscriptionCheckError("Failed to parse location data: " + e.getMessage());
+                            Log.e(TAG, "Error parsing luser subscription", e);
+                            callback.onSubscriptionCheckError("Failed to parse user subscription " + e.getMessage());
                         }
                     } else {
                         callback.onSubscriptionCheckError("Empty response from server");
                     }
                 } else {
-                    Log.w(TAG, "Failed to fetch location history. HTTP Status: " + statusCode);
+                    Log.w(TAG, "Failed to check user subscription" + statusCode);
                     // Try to get response body for more details
                     try {
                         if (response.getEntity() != null) {
@@ -450,6 +450,9 @@ public class ApiService {
             }
 
             String userID = PreferenceManager.getInstance(context).getUserId();
+            if(userID == null || userID.isEmpty()){
+               saveUserIdToPreferences(context.getApplicationContext());
+            }
             getRequest = new HttpGet(BASE_URL + "/subscribe" + "?userId=" + userID);
             getRequest.setHeader("Content-Type", "application/json");
             getRequest.setHeader("Authorization", cogSession.getUserPoolTokensResult().getValue().getIdToken());

@@ -157,6 +157,17 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <TextView
+                    android:id="@+id/note_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="10sp"
+                    android:visibility="gone"
+                    android:textColor="@color/warning_color"
+                    android:layout_gravity="center"
+                    android:text="Passowrd must be at least 8 characters long and include a number and a special character."
+                    />
+
                 <!-- Verification Code Input (for email confirmation) -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/layout_verification_code"

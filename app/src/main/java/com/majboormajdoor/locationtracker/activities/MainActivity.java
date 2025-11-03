@@ -2,6 +2,7 @@ package com.majboormajdoor.locationtracker.activities;
 
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -10,6 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.majboormajdoor.locationtracker.R;
+import com.majboormajdoor.locationtracker.billing.BillingManager;
 import com.majboormajdoor.locationtracker.constants.AppConstants;
 import com.majboormajdoor.locationtracker.fragments.CloudFragment;
 import com.majboormajdoor.locationtracker.fragments.HomeFragment;
@@ -20,9 +22,12 @@ import com.majboormajdoor.locationtracker.utils.PermissionUtils;
  */
 public class MainActivity extends AppCompatActivity {
 
+    public static final String TAG = "MainActivity";
     private BottomNavigationView bottomNavigation;
     private HomeFragment homeFragment;
     private CloudFragment cloudFragment;
+
+    private BillingManager billingManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +78,12 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (selectedFragment != null) {
-                loadFragment(selectedFragment);
+                try{
+                    loadFragment(selectedFragment);
+                }catch(Exception e){
+                    Log.e(TAG, "Error loading fragment: " + e.getMessage());
+                }
+
                 return true;
             }
             return false;

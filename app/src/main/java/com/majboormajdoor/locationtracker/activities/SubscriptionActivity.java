@@ -9,14 +9,11 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.QueryPurchasesParams;
 import com.majboormajdoor.locationtracker.R;
 import com.majboormajdoor.locationtracker.billing.BillingManager;
-import com.majboormajdoor.locationtracker.dto.SubscriptionRequest;
 import com.majboormajdoor.locationtracker.services.ApiService;
 import com.majboormajdoor.locationtracker.utils.PreferenceManager;
 
