@@ -35,4 +35,20 @@
         <item name="colorSurface">@color/surface_primary</item>
         <item name="colorOnSurface">@color/text_primary</item>
     </style>
+
+    <!-- Splash Screen Theme -->
+    <style name="Theme.LocationTracker.Splash" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/accent_primary</item>
+        <item name="colorPrimaryVariant">@color/accent_secondary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">@color/accent_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <!-- Splash screen background -->
+        <item name="android:windowBackground">@drawable/home_image_background</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+
+    </style>
 </resources>

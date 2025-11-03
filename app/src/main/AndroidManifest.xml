@@ -27,7 +27,8 @@
             android:name=".activities.PinLockActivity"
             android:exported="true"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.LocationTracker.NoActionBar">
+            android:theme="@style/Theme.LocationTracker.Splash"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

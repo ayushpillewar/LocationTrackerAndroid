@@ -18,7 +18,7 @@
 
     <!-- Subscription strings -->
     <string name="subscribe_title">Subscribe</string>
-    <string name="subscribe_price">$5 / month</string>
+    <string name="subscribe_price">$2 / month</string>
     <string name="subscribe_price_desc">Subscription price</string>
     <string name="subscribe_description">Get real-time location updates and cloud storage for your tracked devices. Cancel anytime.</string>
     <string name="start_subscription">Start Subscription</string>
@@ -27,7 +27,7 @@
 
     <!-- Home / Fragment strings -->
     <string name="how_it_works">How it works</string>
-    <string name="info_bullets">• The app will send your current location data to our secure API\n• Location updates are sent at your chosen interval.\n Open history tab to check your locations.</string>
+    <string name="info_bullets">• The app will send your current location data to our secure API\n• Location updates are sent at your chosen interval.\n • Open history tab to check your locations.</string>
     <string name="email_section_title">📧 Email Address</string>
     <string name="email_section_desc">Enter the email address to associate with location tracking</string>
     <string name="hint_email_address">Email Address</string>
