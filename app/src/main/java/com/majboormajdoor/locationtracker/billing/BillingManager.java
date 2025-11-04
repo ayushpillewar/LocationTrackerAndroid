@@ -17,6 +17,9 @@ import com.android.billingclient.api.QueryProductDetailsParams;
 import com.android.billingclient.api.QueryPurchasesParams;
 import com.android.billingclient.api.AcknowledgePurchaseParams;
 import com.android.billingclient.api.PendingPurchasesParams;
+import com.majboormajdoor.locationtracker.dto.SubscriptionRequest;
+import com.majboormajdoor.locationtracker.services.ApiService;
+import com.majboormajdoor.locationtracker.utils.PreferenceManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +32,7 @@ public class BillingManager {
     private Context context;
     private BillingListener billingListener;
     private ProductDetails subscriptionProductDetails;
+    private ApiService apiService;
 
     public interface BillingListener {
         void onBillingSetupFinished(BillingResult billingResult);
@@ -40,6 +44,7 @@ public class BillingManager {
     public BillingManager(Context context, BillingListener listener) {
         this.context = context;
         this.billingListener = listener;
+        apiService = new ApiService();
 
         PurchasesUpdatedListener purchasesUpdatedListener = new PurchasesUpdatedListener() {
             @Override
@@ -48,6 +53,9 @@ public class BillingManager {
                 handlePurchasesUpdated(billingResult, purchases);
             }
         };
+        if(billingClient != null && billingClient.isReady()) {
+            billingClient.endConnection();
+        }
 
         billingClient = BillingClient.newBuilder(context)
                 .setListener(purchasesUpdatedListener)
@@ -149,7 +157,7 @@ public class BillingManager {
             return;
         }
 
-        ProductDetails.SubscriptionOfferDetails offerDetails = offerDetailsList.get(1);
+        ProductDetails.SubscriptionOfferDetails offerDetails = offerDetailsList.get(0);
         String offerToken = offerDetails.getOfferToken();
 
         List<BillingFlowParams.ProductDetailsParams> productDetailsParamsList = new ArrayList<>();
@@ -196,12 +204,7 @@ public class BillingManager {
         if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
             // Verify the purchase
             if (verifyValidSignature(purchase.getOriginalJson(), purchase.getSignature())) {
-                // Acknowledge the purchase if it hasn't been acknowledged yet
-                if (!purchase.isAcknowledged()) {
-                    acknowledgePurchase(purchase);
-                }
-                // Grant entitlement to the user
-                grantPremiumAccess();
+                grantPremiumAccess(purchase);
             }
         } else if (purchase.getPurchaseState() == Purchase.PurchaseState.PENDING) {
             Log.d(TAG, "Purchase is pending");
@@ -231,13 +234,29 @@ public class BillingManager {
         return true;
     }
 
-    private void grantPremiumAccess() {
+    public void grantPremiumAccess(Purchase purchase) {
         Log.d(TAG, "Granting premium access to user");
         // TODO: Implement your app's logic to grant premium features
-        // This could include:
-        // - Setting a flag in SharedPreferences
-        // - Updating user status in your backend
-        // - Enabling premium features in the UI
+
+        SubscriptionRequest request = new SubscriptionRequest();
+        request.setSubType("monthly");
+        request.setUserId(PreferenceManager.getInstance(context).getUserId());
+        apiService.createSubscription(request, new ApiService.ApiCallback() {
+            @Override
+            public void onSuccess(String message) {
+                Log.i(TAG, "Subscription recorded on server: " + message);
+                if(!purchase.isAcknowledged()){
+                    acknowledgePurchase(purchase);
+                    PreferenceManager.getInstance(context).setUserSubscriptionStatus(true);
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.i(TAG, "Subscription not recorded on server: ");
+                PreferenceManager.getInstance(context).setUserSubscriptionStatus(false);
+            }
+        });
 
     }
 
@@ -267,8 +286,37 @@ public class BillingManager {
             });
     }
 
+    // Add callback interface for subscription status
     public interface SubscriptionStatusCallback {
-        void onResult(boolean isSubscribed);
+        void onResult(boolean isActive);
+    }
+
+    // Method to check if user has an active subscription
+    public void queryActiveSubscription(SubscriptionStatusCallback callback) {
+        if (billingClient == null || !billingClient.isReady()) {
+            callback.onResult(false);
+            return;
+        }
+
+        QueryPurchasesParams params = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.SUBS)
+            .build();
+
+        billingClient.queryPurchasesAsync(params, (billingResult, purchasesList) -> {
+            boolean isActive = false;
+            if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && purchasesList != null) {
+                for (Purchase purchase : purchasesList) {
+                    List<String> productIds = purchase.getProducts();
+                    if (productIds.contains(SUBSCRIPTION_PRODUCT_ID) &&
+                        purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED &&
+                        purchase.isAcknowledged()) {
+                        isActive = true;
+                        break;
+                    }
+                }
+            }
+            callback.onResult(isActive);
+        });
     }
 
     public void endConnection() {

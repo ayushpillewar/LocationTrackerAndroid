@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Base gradient: very light cream -> soft blue -> deeper blue -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#FBFBFA"
+                android:centerColor="#E6F0F7"
+                android:endColor="#CFE6F7"
+                android:type="linear" />
+        </shape>
+    </item>
+
+    <!-- Gentle vignette at the top to add classic depth -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#22000000"
+                android:endColor="#00000000"
+                android:type="linear" />
+        </shape>
+    </item>
+
+    <!-- Light warm overlay to soften the tones, improves card contrast -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#20FFFFFF" />
+        </shape>
+    </item>
+
+</layer-list>

@@ -2,12 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/navigation_home"
-        android:icon="@android:drawable/ic_menu_mylocation"
+        android:icon="@android:drawable/ic_media_rew"
         android:title="Home" />
 
     <item
         android:id="@+id/navigation_cloud"
-        android:icon="@android:drawable/ic_menu_upload"
+        android:icon="@android:drawable/ic_menu_recent_history"
         android:title="Location History" />
 </menu>
 
