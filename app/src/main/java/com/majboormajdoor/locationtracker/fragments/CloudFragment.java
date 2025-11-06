@@ -23,8 +23,11 @@ import com.majboormajdoor.locationtracker.R;
 import com.majboormajdoor.locationtracker.adapters.LocationAdapter;
 import com.majboormajdoor.locationtracker.dto.Location;
 import com.majboormajdoor.locationtracker.services.ApiService;
+import com.majboormajdoor.locationtracker.utils.CacheLocations;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Fragment for displaying location history from backend
@@ -66,7 +69,8 @@ public class CloudFragment extends Fragment implements ApiService.LocationHistor
         mainHandler = new Handler(Looper.getMainLooper());
 
         // Load location history on fragment creation
-        loadLocationHistory();
+        List<Location> locations = new ArrayList<>(CacheLocations.getInstance(getContext()).getCachedLocations().values());
+        onSuccess(locations);
     }
 
     private void initializeViews(View view) {
@@ -80,7 +84,7 @@ public class CloudFragment extends Fragment implements ApiService.LocationHistor
     }
 
     private void setupRecyclerView() {
-        locationAdapter = new LocationAdapter();
+        locationAdapter = new LocationAdapter(getContext());
         recyclerViewLocations.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerViewLocations.setAdapter(locationAdapter);
     }
@@ -170,6 +174,7 @@ public class CloudFragment extends Fragment implements ApiService.LocationHistor
     @Override
     public void onSuccess(List<Location> locationHistory) {
         Log.d(TAG, "Successfully fetched " + (locationHistory != null ? locationHistory.size() : 0) + " location records");
+
         showContent(locationHistory);
     }
 

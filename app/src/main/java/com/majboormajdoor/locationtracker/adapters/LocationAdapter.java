@@ -13,6 +13,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.majboormajdoor.locationtracker.R;
 import com.majboormajdoor.locationtracker.dto.Location;
+import com.majboormajdoor.locationtracker.utils.CacheLocations;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.text.SimpleDateFormat;
@@ -27,8 +29,11 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
     private List<Location> locationList;
     private SimpleDateFormat dateFormat;
 
-    public LocationAdapter() {
+    private CacheLocations cacher;
+
+    public LocationAdapter(Context context) {
         this.locationList = new ArrayList<>();
+        this.cacher = CacheLocations.getInstance(context);
         this.dateFormat = new SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault());
     }
 
@@ -52,8 +57,9 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
     }
 
     public void updateLocations(List<Location> newLocations) {
+        this.cacher.cacheLocations(newLocations);
         this.locationList.clear();
-        this.locationList.addAll(newLocations);
+        this.locationList.addAll(this.cacher.getCachedLocations().values());
         notifyDataSetChanged();
     }
 

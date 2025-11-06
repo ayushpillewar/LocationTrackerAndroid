@@ -78,7 +78,13 @@ dependencies {
     // https://mvnrepository.com/artifact/javax.mail/mail
     implementation("javax.mail:mail:1.4.1")
     implementation(libs.play.services.location)
+
+    // Test dependencies
     testImplementation(libs.junit)
+    testImplementation("org.mockito:mockito-core:5.7.0")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.7.0")
+    testImplementation("org.robolectric:robolectric:4.11.1")
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }
