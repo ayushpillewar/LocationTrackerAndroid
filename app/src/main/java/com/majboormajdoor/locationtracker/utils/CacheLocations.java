@@ -50,8 +50,8 @@ public class CacheLocations {
         try {
             locationMap = new ConcurrentHashMap<>();
             Map<String,Location> cachedMap = getCachedLocations();
-            if(!cachedMap.isEmpty()) {
-                locations.addAll(cachedMap.values());
+            for(Location loc : cachedMap.values()) {
+                locationMap.put(loc.getUserId() + "_" + loc.getInsertionTimestamp(), loc);
             }
 
             for(Location loc : locations) {

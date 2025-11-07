@@ -2,6 +2,7 @@ package com.majboormajdoor.locationtracker.activities;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import com.majboormajdoor.locationtracker.billing.BillingManager;
 import com.majboormajdoor.locationtracker.constants.AppConstants;
 import com.majboormajdoor.locationtracker.fragments.CloudFragment;
 import com.majboormajdoor.locationtracker.fragments.HomeFragment;
+import com.majboormajdoor.locationtracker.services.CognitoAuthService;
 import com.majboormajdoor.locationtracker.utils.PermissionUtils;
 
 /**
@@ -35,7 +37,9 @@ public class MainActivity extends AppCompatActivity {
     private HomeFragment homeFragment;
     private CloudFragment cloudFragment;
     private ImageButton btnInfo;
+    private ImageButton btnSignOut;
     private SharedPreferences sharedPreferences;
+    private CognitoAuthService cognitoAuthService;
 
     private BillingManager billingManager;
 
@@ -47,11 +51,15 @@ public class MainActivity extends AppCompatActivity {
         // Initialize shared preferences
         sharedPreferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
 
+        // Initialize CognitoAuthService
+        cognitoAuthService = CognitoAuthService.getInstance(getApplicationContext());
+
         initializeViews();
         initializeFragments();
         setupBottomNavigation();
         setupBackPressHandling();
         setupInfoButton();
+        setupSignOutButton();
 
         // Set default fragment
         if (savedInstanceState == null) {
@@ -72,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
     private void initializeViews() {
         bottomNavigation = findViewById(R.id.bottom_navigation);
         btnInfo = findViewById(R.id.btn_info);
+        btnSignOut = findViewById(R.id.btn_sign_out);
     }
 
     /**
@@ -142,6 +151,96 @@ public class MainActivity extends AppCompatActivity {
     private void setupInfoButton() {
         if (btnInfo != null) {
             btnInfo.setOnClickListener(v -> showInfoDialog());
+        }
+    }
+
+    /**
+     * Setup sign-out button click listener
+     */
+    private void setupSignOutButton() {
+        if (btnSignOut != null) {
+            btnSignOut.setOnClickListener(v -> showSignOutConfirmationDialog());
+        }
+    }
+
+    /**
+     * Show confirmation dialog before signing out
+     */
+    private void showSignOutConfirmationDialog() {
+        try {
+            androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+            builder.setTitle("Sign Out")
+                    .setMessage("Are you sure you want to sign out? You will need to log in again to access the app.")
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton("Sign Out", (dialog, which) -> {
+                        dialog.dismiss();
+                        performSignOut();
+                    })
+                    .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                    .setCancelable(true)
+                    .create()
+                    .show();
+        } catch (Exception e) {
+            Log.e(TAG, "Error showing sign out confirmation dialog: " + e.getMessage());
+            // Fallback to direct sign out if dialog fails
+            performSignOut();
+        }
+    }
+
+    /**
+     * Perform sign out operation
+     */
+    private void performSignOut() {
+        if (cognitoAuthService != null) {
+            // Show loading message
+            Toast.makeText(this, "Signing out...", Toast.LENGTH_SHORT).show();
+
+            // Disable sign-out button to prevent multiple clicks
+            btnSignOut.setEnabled(false);
+
+            cognitoAuthService.signOut(new CognitoAuthService.AuthCallback() {
+                @Override
+                public void onSuccess(String message) {
+                    Log.d(TAG, "Sign out successful: " + message);
+                    runOnUiThread(() -> {
+                        showSuccess("Signed out successfully");
+                        navigateToPinLockActivity();
+                    });
+                }
+
+                @Override
+                public void onError(String error) {
+                    Log.e(TAG, "Sign out failed: " + error);
+                    runOnUiThread(() -> {
+                        showError("Sign out failed: " + error);
+                        // Re-enable sign-out button
+                        btnSignOut.setEnabled(true);
+                    });
+                }
+
+                @Override
+                public void onConfirmationRequired(String message) {
+                    // Not needed for sign out, but required by interface
+                    Log.d(TAG, "Confirmation required for sign out: " + message);
+                }
+            });
+        } else {
+            showError("Authentication service not available");
+        }
+    }
+
+    /**
+     * Navigate back to PinLockActivity
+     */
+    private void navigateToPinLockActivity() {
+        try {
+            Intent intent = new Intent(this, com.majboormajdoor.locationtracker.activities.PinLockActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        } catch (Exception e) {
+            Log.e(TAG, "Error navigating to PinLockActivity: " + e.getMessage());
+            showError("Unable to navigate to login screen");
         }
     }
 

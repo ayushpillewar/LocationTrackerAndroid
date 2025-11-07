@@ -65,7 +65,7 @@ public class CloudFragment extends Fragment implements ApiService.LocationHistor
         setupClickListeners();
 
         // Initialize services
-        apiService = new ApiService();
+        apiService = new ApiService(getContext());
         mainHandler = new Handler(Looper.getMainLooper());
 
         // Load location history on fragment creation
@@ -189,7 +189,8 @@ public class CloudFragment extends Fragment implements ApiService.LocationHistor
         super.onResume();
         // Refresh data when fragment becomes visible
         if (locationAdapter != null && locationAdapter.getItemCount() == 0) {
-            loadLocationHistory();
+            List<Location> locations = new ArrayList<>(CacheLocations.getInstance(getContext()).getCachedLocations().values());
+            onSuccess(locations);
         }
     }
 

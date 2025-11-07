@@ -63,7 +63,7 @@ public class LocationTrackingService extends Service {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         apiHandler = new Handler(Looper.getMainLooper());
-        apiService = new ApiService();
+        apiService = new ApiService(getApplicationContext());
 
 
         createNotificationChannel();

@@ -38,9 +38,9 @@ public class ApiService {
 
     private static final String BASE_URL = "https://i81leg33o7.execute-api.ap-south-1.amazonaws.com/prod";
 
-    public ApiService() {
+    public ApiService(Context context) {
         this.httpClient = CustomHttpClientConfig.createHttpClient();
-        this.authService = CognitoAuthService.getInstance();
+        this.authService = CognitoAuthService.getInstance(context);
     }
 
     /**

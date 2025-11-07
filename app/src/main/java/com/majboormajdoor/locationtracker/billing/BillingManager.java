@@ -44,7 +44,7 @@ public class BillingManager {
     public BillingManager(Context context, BillingListener listener) {
         this.context = context;
         this.billingListener = listener;
-        apiService = new ApiService();
+        apiService = new ApiService(context);
 
         PurchasesUpdatedListener purchasesUpdatedListener = new PurchasesUpdatedListener() {
             @Override

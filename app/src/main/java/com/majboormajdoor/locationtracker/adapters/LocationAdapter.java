@@ -20,6 +20,7 @@ import java.util.List;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * RecyclerView adapter for displaying location history
@@ -59,7 +60,16 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
     public void updateLocations(List<Location> newLocations) {
         this.cacher.cacheLocations(newLocations);
         this.locationList.clear();
-        this.locationList.addAll(this.cacher.getCachedLocations().values());
+        for(Location loc: this.cacher.getCachedLocations().values()){
+            this.locationList.add(loc);
+        }
+        this.locationList = this.locationList.stream().sorted((l1, l2) -> {
+            String t1 = l1.getInsertionTimestamp();
+            String t2 = l2.getInsertionTimestamp();
+            if(t1 == null) t1 = "";
+            if(t2 == null) t2 = "";
+            return t2.compareTo(t1);
+        }).collect(Collectors.toList());
         notifyDataSetChanged();
     }
 

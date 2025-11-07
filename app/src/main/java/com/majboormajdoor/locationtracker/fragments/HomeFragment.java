@@ -83,7 +83,7 @@ public class HomeFragment extends Fragment {
     private void initializePreferences() {
         preferenceManager = PreferenceManager.getInstance(requireContext());
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
-        apiService = new ApiService();
+        apiService = new ApiService(getContext());
     }
 
     /**
