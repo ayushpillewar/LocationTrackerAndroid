@@ -1,8 +1,13 @@
 package com.majboormajdoor.locationtracker.activities;
 
+import android.app.Dialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -23,9 +28,14 @@ import com.majboormajdoor.locationtracker.utils.PermissionUtils;
 public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "MainActivity";
+    private static final String PREF_FIRST_LAUNCH = "first_launch";
+    private static final String PREF_NAME = "LocationTrackerPrefs";
+
     private BottomNavigationView bottomNavigation;
     private HomeFragment homeFragment;
     private CloudFragment cloudFragment;
+    private ImageButton btnInfo;
+    private SharedPreferences sharedPreferences;
 
     private BillingManager billingManager;
 
@@ -34,10 +44,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Initialize shared preferences
+        sharedPreferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+
         initializeViews();
         initializeFragments();
         setupBottomNavigation();
         setupBackPressHandling();
+        setupInfoButton();
 
         // Set default fragment
         if (savedInstanceState == null) {
@@ -47,6 +61,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Request permissions if not already granted
         checkAndRequestPermissions();
+
+        // Show info dialog on first launch
+        showFirstLaunchDialog();
     }
 
     /**
@@ -54,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void initializeViews() {
         bottomNavigation = findViewById(R.id.bottom_navigation);
+        btnInfo = findViewById(R.id.btn_info);
     }
 
     /**
@@ -116,6 +134,60 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    /**
+     * Setup info button click listener
+     */
+    private void setupInfoButton() {
+        if (btnInfo != null) {
+            btnInfo.setOnClickListener(v -> showInfoDialog());
+        }
+    }
+
+    /**
+     * Show info dialog on first launch
+     */
+    private void showFirstLaunchDialog() {
+        boolean isFirstLaunch = sharedPreferences.getBoolean(PREF_FIRST_LAUNCH, true);
+        if (isFirstLaunch) {
+            // Mark first launch as completed
+            sharedPreferences.edit().putBoolean(PREF_FIRST_LAUNCH, false).apply();
+
+            // Show info dialog after a short delay to ensure UI is ready
+            btnInfo.postDelayed(this::showInfoDialog, 500);
+        }
+    }
+
+    /**
+     * Show info dialog with app instructions
+     */
+    private void showInfoDialog() {
+        try {
+            Dialog dialog = new Dialog(this);
+            dialog.setContentView(R.layout.dialog_app_info);
+            dialog.setCancelable(true);
+
+            // Set dialog window properties
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                dialog.getWindow().setLayout(
+                    (int) (getResources().getDisplayMetrics().widthPixels * 0.9),
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+            }
+
+            // Setup dialog button
+            Button btnGotIt = dialog.findViewById(R.id.btn_got_it);
+            if (btnGotIt != null) {
+                btnGotIt.setOnClickListener(v -> dialog.dismiss());
+            }
+
+            dialog.show();
+        } catch (Exception e) {
+            Log.e(TAG, "Error showing info dialog: " + e.getMessage());
+            showError("Unable to show app information");
+        }
     }
 
     /**
