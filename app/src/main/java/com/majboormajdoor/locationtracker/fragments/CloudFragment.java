@@ -113,6 +113,11 @@ public class CloudFragment extends Fragment implements ApiService.LocationHistor
         }
     }
 
+    public interface ShowContentCallback {
+        void showEmptyState();
+    }
+
+
     private void showLoading() {
         mainHandler.post(() -> {
             progressBar.setVisibility(View.VISIBLE);
@@ -128,16 +133,14 @@ public class CloudFragment extends Fragment implements ApiService.LocationHistor
             progressBar.setVisibility(View.GONE);
             btnRefresh.setEnabled(true);
 
-            if (locations != null && !locations.isEmpty()) {
+            if (locations != null) {
                 Log.d(TAG, "Displaying " + locations.size() + " location records");
                 recyclerViewLocations.setVisibility(View.VISIBLE);
                 emptyStateLayout.setVisibility(View.GONE);
                 errorStateLayout.setVisibility(View.GONE);
-                locationAdapter.updateLocations(locations);
-            } else {
-                Log.d(TAG, "No location records found");
-                showEmptyState();
+                locationAdapter.updateLocations(locations, CloudFragment.this::showEmptyState);
             }
+
         });
     }
 

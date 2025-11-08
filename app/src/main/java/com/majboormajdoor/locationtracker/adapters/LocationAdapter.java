@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.majboormajdoor.locationtracker.R;
 import com.majboormajdoor.locationtracker.dto.Location;
+import com.majboormajdoor.locationtracker.fragments.CloudFragment;
 import com.majboormajdoor.locationtracker.utils.CacheLocations;
 
 import java.util.ArrayList;
@@ -57,7 +58,7 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
         return locationList.size();
     }
 
-    public void updateLocations(List<Location> newLocations) {
+    public void updateLocations(List<Location> newLocations, CloudFragment.ShowContentCallback callback) {
         this.cacher.cacheLocations(newLocations);
         this.locationList.clear();
         for(Location loc: this.cacher.getCachedLocations().values()){
@@ -70,6 +71,9 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
             if(t2 == null) t2 = "";
             return t2.compareTo(t1);
         }).collect(Collectors.toList());
+        if(this.locationList.isEmpty()){
+            callback.showEmptyState();
+        }
         notifyDataSetChanged();
     }
 
