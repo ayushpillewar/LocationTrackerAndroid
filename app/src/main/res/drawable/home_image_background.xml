@@ -4,7 +4,7 @@
         <bitmap
             android:src="@drawable/home_image"
             android:scaleType="centerCrop"
-            android:alpha="0.5" />
+            android:alpha="0.8" />
     </item>
 </layer-list>
 
