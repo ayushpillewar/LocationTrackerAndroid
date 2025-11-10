@@ -236,7 +236,6 @@ public class BillingManager {
 
     public void grantPremiumAccess(Purchase purchase) {
         Log.d(TAG, "Granting premium access to user");
-        // TODO: Implement your app's logic to grant premium features
 
         SubscriptionRequest request = new SubscriptionRequest();
         request.setSubType("monthly");
