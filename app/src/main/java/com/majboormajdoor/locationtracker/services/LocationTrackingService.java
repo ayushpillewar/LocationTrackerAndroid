@@ -215,7 +215,7 @@ public class LocationTrackingService extends Service {
             locationData.setLatitude(latitude);
             locationData.setLongitude(longitude);
             locationData.setInsertionTimestamp(timestamp);
-            locationData.setUserEmail(PreferenceManager.getInstance(getApplicationContext()).getEmailAddress());
+            locationData.setUserName(PreferenceManager.getInstance(getApplicationContext()).getTrackieName());
 
             // Send location data to API
             apiService.postLocation(locationData, new ApiService.ApiCallback() {

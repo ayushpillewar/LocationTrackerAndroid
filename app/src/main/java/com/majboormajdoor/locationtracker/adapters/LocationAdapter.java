@@ -111,6 +111,8 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
         private TextView tvLongitude;
         private TextView tvTimestamp;
 
+        private TextView tvTrackieName;
+
         private Button tvButton;
         private TextView tvEmail;
 
@@ -120,6 +122,7 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
             tvLongitude = itemView.findViewById(R.id.tv_longitude);
             tvTimestamp = itemView.findViewById(R.id.tv_timestamp);
             tvButton = itemView.findViewById(R.id.btn_show_on_map);
+            tvTrackieName = itemView.findViewById(R.id.tv_trackieName);
 
         }
 
@@ -128,7 +131,7 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
         public void bind(Location location) {
             tvLatitude.setText(String.format(Locale.getDefault(), "Lat: %.6f", location.getLatitude()));
             tvLongitude.setText(String.format(Locale.getDefault(), "Lng: %.6f", location.getLongitude()));
-
+            tvTrackieName.setText(String.format("Trackie Name : %s ", location.getUserName()));
             // Format timestamp if available
             if (location.getInsertionTimestamp() != null && !location.getInsertionTimestamp().isEmpty()) {
                 try {
@@ -137,13 +140,13 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
                         // Epoch time
                         long timestamp = Long.parseLong(location.getInsertionTimestamp());
                         Date date = new Date(timestamp);
-                        tvTimestamp.setText(dateFormat.format(date));
+                        tvTimestamp.setText(String.format("Time : %s ", date));
                     } else {
                         // ISO format or other string format
-                        tvTimestamp.setText(location.getInsertionTimestamp());
+                        tvTimestamp.setText(String.format("Time : %s ", location.getInsertionTimestamp()));
                     }
                 } catch (Exception e) {
-                    tvTimestamp.setText(location.getInsertionTimestamp());
+                    tvTimestamp.setText(String.format("Time : %s ", location.getInsertionTimestamp()));
                 }
             } else {
                 tvTimestamp.setText("No timestamp");

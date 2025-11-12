@@ -43,6 +43,7 @@ public class CloudFragment extends Fragment implements ApiService.LocationHistor
     private LinearLayout emptyStateLayout;
     private LinearLayout errorStateLayout;
     private TextView tvErrorMessage;
+
     private Button btnRefresh;
     private Button btnRetry;
 

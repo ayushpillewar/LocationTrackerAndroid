@@ -188,7 +188,7 @@ public class ApiService {
                 // Log the location data being sent
                 Log.d(TAG, "Sending location data - Lat: " + locationData.getLatitude() +
                           ", Lng: " + locationData.getLongitude() +
-                          ", Email: " + locationData.getUserEmail()); // Using getPhoneNumber() which contains email
+                          ", Email: " + locationData.getUserName()); // Using getPhoneNumber() which contains email
                 Log.d(TAG, "Sending POST request to: " + BASE_URL);
 
             } catch (JsonProcessingException e) {

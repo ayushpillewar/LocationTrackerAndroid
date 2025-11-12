@@ -33,7 +33,7 @@ import java.util.Locale;
  */
 public class HomeFragment extends Fragment {
 
-    private TextInputEditText etEmailAddress;
+    private TextInputEditText trackieName;
     private SeekBar seekBarInterval;
     private TextView tvIntervalValue, tvIntervalLabel;
     private Button btnStartTracking, btnStopTracking, btnTestLocation;
@@ -68,7 +68,7 @@ public class HomeFragment extends Fragment {
      * Initialize all views
      */
     private void initializeViews(View view) {
-        etEmailAddress = view.findViewById(R.id.et_email_address);
+        trackieName = view.findViewById(R.id.et_email_address);
         seekBarInterval = view.findViewById(R.id.seekbar_interval);
         tvIntervalValue = view.findViewById(R.id.tv_interval_value);
         tvIntervalLabel = view.findViewById(R.id.tv_interval_label);
@@ -125,11 +125,11 @@ public class HomeFragment extends Fragment {
         btnTestLocation.setOnClickListener(v -> testLocationSending());
 
         // Save email address when focus is lost
-        etEmailAddress.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus && etEmailAddress.getText() != null) {
-                String emailAddress = etEmailAddress.getText().toString().trim();
-                if (!emailAddress.isEmpty() && ValidationUtils.isValidEmail(emailAddress)) {
-                    preferenceManager.saveEmailAddress(emailAddress);
+        trackieName.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus && trackieName.getText() != null) {
+                String trackieName = this.trackieName.getText().toString().trim();
+                if (!trackieName.isEmpty() && ValidationUtils.isValidName(trackieName)) {
+                    preferenceManager.saveTrackieName(trackieName);
                 }
             }
         });
@@ -140,9 +140,9 @@ public class HomeFragment extends Fragment {
      */
     private void loadSavedData() {
         // Load saved email address
-        String savedEmail = preferenceManager.getEmailAddress();
+        String savedEmail = preferenceManager.getTrackieName();
         if (!savedEmail.isEmpty()) {
-            etEmailAddress.setText(savedEmail);
+            trackieName.setText(savedEmail);
         }
 
         // Load saved time interval (stored in minutes)
@@ -201,17 +201,17 @@ public class HomeFragment extends Fragment {
      * Start location tracking service
      */
     private void startLocationTracking() {
-        if (etEmailAddress.getText() == null) {
+        if (trackieName.getText() == null) {
             showError("Please enter an email address");
             return;
         }
 
-        String emailAddress = etEmailAddress.getText().toString().trim();
+        String trackieName = this.trackieName.getText().toString().trim();
 
         // Validate email address
-        if (!ValidationUtils.isValidEmail(emailAddress)) {
+        if (!ValidationUtils.isValidName(trackieName)) {
             showError("Please enter a valid email address");
-            etEmailAddress.requestFocus();
+            this.trackieName.requestFocus();
             return;
         }
 
@@ -223,7 +223,7 @@ public class HomeFragment extends Fragment {
         }
 
         // Save email address
-        preferenceManager.saveEmailAddress(emailAddress);
+        preferenceManager.saveTrackieName(trackieName);
 
         // Get time interval in minutes (10-minute increments)
         int intervalMinutes = AppConstants.MIN_TIME_INTERVAL_MINUTES + (seekBarInterval.getProgress() * 10);
@@ -231,7 +231,7 @@ public class HomeFragment extends Fragment {
         // Start the service
         Intent serviceIntent = new Intent(requireContext(), LocationTrackingService.class);
         serviceIntent.setAction(AppConstants.SERVICE_ACTION_START);
-        serviceIntent.putExtra(AppConstants.EXTRA_EMAIL_ADDRESS, emailAddress);
+        serviceIntent.putExtra(AppConstants.EXTRA_EMAIL_ADDRESS, trackieName);
         serviceIntent.putExtra(AppConstants.EXTRA_TIME_INTERVAL, intervalMinutes);
 
         // Use API level compatible service start
@@ -268,7 +268,7 @@ public class HomeFragment extends Fragment {
             btnStopTracking.setAlpha(1.0f);
 
             // Disable configuration changes while tracking
-            etEmailAddress.setEnabled(false);
+            trackieName.setEnabled(false);
             seekBarInterval.setEnabled(false);
 
         } else {
@@ -278,7 +278,7 @@ public class HomeFragment extends Fragment {
             btnStopTracking.setAlpha(0.5f);
 
             // Enable configuration changes
-            etEmailAddress.setEnabled(true);
+            trackieName.setEnabled(true);
             seekBarInterval.setEnabled(true);
         }
     }
@@ -315,17 +315,17 @@ public class HomeFragment extends Fragment {
      * Test location sending to API
      */
     private void testLocationSending() {
-        if (etEmailAddress.getText() == null) {
-            showError("Please enter an email address");
+        if (trackieName.getText() == null) {
+            showError("Please enter name");
             return;
         }
 
-        String emailAddress = etEmailAddress.getText().toString().trim();
+        String trackieName = this.trackieName.getText().toString().trim();
 
         // Validate email address
-        if (!ValidationUtils.isValidEmail(emailAddress)) {
-            showError("Please enter a valid email address");
-            etEmailAddress.requestFocus();
+        if (!ValidationUtils.isValidName(trackieName)) {
+            showError("Please enter a valid trackie name");
+            this.trackieName.requestFocus();
             return;
         }
 
@@ -349,7 +349,7 @@ public class HomeFragment extends Fragment {
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
                     if (location != null) {
-                        sendTestLocationToAPI(location, emailAddress);
+                        sendTestLocationToAPI(location, trackieName);
                     } else {
                         showError("Unable to get current location. Please try again.");
                     }
@@ -373,7 +373,7 @@ public class HomeFragment extends Fragment {
             locationData.setLatitude(latitude);
             locationData.setLongitude(longitude);
             locationData.setInsertionTimestamp(timestamp);
-            locationData.setUserEmail(emailAddress); // Using email address in phone number field
+            locationData.setUserName(emailAddress); // Using email address in phone number field
 
             // Send test location data to API
             apiService.postLocation(locationData, new ApiService.ApiCallback() {
