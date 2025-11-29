@@ -75,6 +75,9 @@ public class AppConstants {
     public static final int TIME_MULTIPLIER = 1;
     public static final String TRACKING_STATUS = "tracking_status";
 
+    //Api constants
+    public static final String BASE_URL = "https://majboormajdoor.com";
+
     // Private constructor to prevent instantiation
     private AppConstants() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");

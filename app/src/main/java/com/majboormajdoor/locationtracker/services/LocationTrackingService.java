@@ -192,7 +192,7 @@ public class LocationTrackingService extends Service {
             } catch (Exception e) {
                 Log.e(TAG, "Error running scheduled API task", e);
             }
-        }, 0, timeIntervalMinutes * AppConstants.TIME_MULTIPLIER, TimeUnit.MINUTES);
+        }, 1, timeIntervalMinutes * AppConstants.TIME_MULTIPLIER, TimeUnit.MINUTES);
 
         Log.d(TAG, "Scheduler started (every " + timeIntervalMinutes + " min)");
     }
