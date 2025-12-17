@@ -202,15 +202,14 @@ public class HomeFragment extends Fragment {
      */
     private void startLocationTracking() {
         if (trackieName.getText() == null) {
-            showError("Please enter an email address");
+            showError("Please enter a valid person name");
             return;
         }
 
         String trackieName = this.trackieName.getText().toString().trim();
 
-        // Validate email address
         if (!ValidationUtils.isValidName(trackieName)) {
-            showError("Please enter a valid email address");
+            showError("Please enter a valid person name");
             this.trackieName.requestFocus();
             return;
         }
