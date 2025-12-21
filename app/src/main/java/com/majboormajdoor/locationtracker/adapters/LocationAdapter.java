@@ -61,21 +61,40 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
     public void updateLocations(List<Location> newLocations, CloudFragment.ShowContentCallback callback) {
         this.cacher.cacheLocations(newLocations);
         this.locationList.clear();
-        for(Location loc: this.cacher.getCachedLocations().values()){
+        for (Location loc : this.cacher.getCachedLocations().values()) {
             this.locationList.add(loc);
         }
         this.locationList = this.locationList.stream().sorted((l1, l2) -> {
             String t1 = l1.getInsertionTimestamp();
             String t2 = l2.getInsertionTimestamp();
-            if(t1 == null) t1 = "";
-            if(t2 == null) t2 = "";
+            if (t1 == null)
+                t1 = "";
+            if (t2 == null)
+                t2 = "";
             return t2.compareTo(t1);
         }).collect(Collectors.toList());
-        if(this.locationList.isEmpty()){
+        if (this.locationList.isEmpty()) {
             callback.showEmptyState();
         }
         notifyDataSetChanged();
     }
+    public void updateFilteredLocations(List<Location> newLocations, CloudFragment.ShowContentCallback callback) {
+
+        this.locationList = newLocations.stream().sorted((l1, l2) -> {
+            String t1 = l1.getInsertionTimestamp();
+            String t2 = l2.getInsertionTimestamp();
+            if (t1 == null)
+                t1 = "";
+            if (t2 == null)
+                t2 = "";
+            return t2.compareTo(t1);
+        }).collect(Collectors.toList());
+        if (this.locationList.isEmpty()) {
+            callback.showEmptyState();
+        }
+        notifyDataSetChanged();
+    }
+
 
     public void clearLocations() {
         this.locationList.clear();
@@ -97,7 +116,8 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
                 context.startActivity(intent);
             } else {
                 // Fallback to web version of Google Maps
-                String webUri = String.format(Locale.ENGLISH, "https://www.google.com/maps?q=%f,%f", latitude, longitude);
+                String webUri = String.format(Locale.ENGLISH, "https://www.google.com/maps?q=%f,%f", latitude,
+                        longitude);
                 Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(webUri));
                 context.startActivity(webIntent);
             }
@@ -126,8 +146,6 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
 
         }
 
-
-
         public void bind(Location location) {
             tvLatitude.setText(String.format(Locale.getDefault(), "Lat: %.6f", location.getLatitude()));
             tvLongitude.setText(String.format(Locale.getDefault(), "Lng: %.6f", location.getLongitude()));
@@ -151,7 +169,6 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
             } else {
                 tvTimestamp.setText("No timestamp");
             }
-
 
             // Set up the "Show on Map" button click listener - THIS WAS MISSING!
             tvButton.setOnClickListener(v -> {
