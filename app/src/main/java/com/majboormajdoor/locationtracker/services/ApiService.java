@@ -1,5 +1,7 @@
 package com.majboormajdoor.locationtracker.services;
 
+import static com.majboormajdoor.locationtracker.constants.AppConstants.BASE_URL;
+
 import android.content.Context;
 import android.util.Log;
 
@@ -36,11 +38,11 @@ public class ApiService {
     private final CloseableHttpClient httpClient;
     private final CognitoAuthService authService;
 
-    private static final String BASE_URL = "https://i81leg33o7.execute-api.ap-south-1.amazonaws.com/prod";
 
-    public ApiService() {
+
+    public ApiService(Context context) {
         this.httpClient = CustomHttpClientConfig.createHttpClient();
-        this.authService = CognitoAuthService.getInstance();
+        this.authService = CognitoAuthService.getInstance(context);
     }
 
     /**
@@ -188,7 +190,7 @@ public class ApiService {
                 // Log the location data being sent
                 Log.d(TAG, "Sending location data - Lat: " + locationData.getLatitude() +
                           ", Lng: " + locationData.getLongitude() +
-                          ", Email: " + locationData.getUserEmail()); // Using getPhoneNumber() which contains email
+                          ", Email: " + locationData.getUserName()); // Using getPhoneNumber() which contains email
                 Log.d(TAG, "Sending POST request to: " + BASE_URL);
 
             } catch (JsonProcessingException e) {

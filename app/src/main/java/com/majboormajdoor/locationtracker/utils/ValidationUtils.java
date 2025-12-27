@@ -47,6 +47,15 @@ public class ValidationUtils {
         String emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
         return email.matches(emailPattern);
     }
+    public static boolean isValidName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return false;
+        }
+
+        // Basic name validation pattern (allows letters, spaces, hyphens, and apostrophes)
+        String namePattern = "^[a-zA-Z\\s'-]+$";
+        return name.matches(namePattern);
+    }
 
     /**
      * Validate time interval

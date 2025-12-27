@@ -63,7 +63,7 @@ public class LocationTrackingService extends Service {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         apiHandler = new Handler(Looper.getMainLooper());
-        apiService = new ApiService();
+        apiService = new ApiService(getApplicationContext());
 
 
         createNotificationChannel();
@@ -192,7 +192,7 @@ public class LocationTrackingService extends Service {
             } catch (Exception e) {
                 Log.e(TAG, "Error running scheduled API task", e);
             }
-        }, 0, timeIntervalMinutes * AppConstants.TIME_MULTIPLIER, TimeUnit.MINUTES);
+        }, 1, timeIntervalMinutes * AppConstants.TIME_MULTIPLIER, TimeUnit.MINUTES);
 
         Log.d(TAG, "Scheduler started (every " + timeIntervalMinutes + " min)");
     }
@@ -215,7 +215,7 @@ public class LocationTrackingService extends Service {
             locationData.setLatitude(latitude);
             locationData.setLongitude(longitude);
             locationData.setInsertionTimestamp(timestamp);
-            locationData.setUserEmail(PreferenceManager.getInstance(getApplicationContext()).getEmailAddress());
+            locationData.setUserName(PreferenceManager.getInstance(getApplicationContext()).getTrackieName());
 
             // Send location data to API
             apiService.postLocation(locationData, new ApiService.ApiCallback() {

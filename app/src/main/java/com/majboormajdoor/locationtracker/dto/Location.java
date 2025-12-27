@@ -12,8 +12,8 @@ public class Location {
     @JsonProperty("longitude")
     private double longitude;
 
-    @JsonProperty("userEmail")
-    private String userEmail;
+    @JsonProperty("userName")
+    private String userName;
 
     @JsonProperty("insertionTimestamp")
     private String insertionTimestamp;
@@ -27,16 +27,16 @@ public class Location {
     public Location(double latitude, double longitude, String email, String timestamp) {
         this.latitude = latitude;
         this.longitude = longitude;
-        this.userEmail = email;
+        this.userName = email;
         this.insertionTimestamp = timestamp;
     }
 
-    public String getUserEmail() {
-        return userEmail;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public String getInsertionTimestamp() {
@@ -78,7 +78,7 @@ public class Location {
         return "Location{" +
                 "latitude=" + latitude +
                 ", longitude=" + longitude +
-                ", userEmail='" + userEmail + '\'' +
+                ", userName='" + userName + '\'' +
                 ", insertionTimestamp='" + insertionTimestamp + '\'' +
                 ", userId='" + userId + '\'' +
                 '}';

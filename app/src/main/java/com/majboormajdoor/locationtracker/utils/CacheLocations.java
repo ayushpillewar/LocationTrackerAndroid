@@ -9,25 +9,55 @@ import com.google.gson.reflect.TypeToken;
 import com.majboormajdoor.locationtracker.dto.Location;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
+
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CacheLocations {
     private static final String TAG = "LocationCacheManager";
     private static final String KEY_LOCATIONS = "cached_locations";
 
+    private static CacheLocations instance;
+    private static final Object lock = new Object();
+
     private SharedPreferences preferences;
     private Gson gson;
 
-    CacheLocations(Context context) {
+    // Private constructor to prevent direct instantiation
+    private CacheLocations(Context context) {
         preferences = PreferenceManager.getInstance(context).getSharedPreferences();
         gson = new Gson();
     }
 
+    /**
+     * Get singleton instance of CacheLocations
+     * Thread-safe implementation using double-checked locking
+     */
+    public static CacheLocations getInstance(Context context) {
+        if (instance == null) {
+            synchronized (lock) {
+                if (instance == null) {
+                    instance = new CacheLocations(context.getApplicationContext());
+                }
+            }
+        }
+        return instance;
+    }
+
     public void cacheLocations(List<Location> locations) {
+        Map<String,Location> locationMap;
         try {
-            locations.addAll(getCachedLocations());
-            String json = gson.toJson(locations);
+            locationMap = new ConcurrentHashMap<>();
+            Map<String,Location> cachedMap = getCachedLocations();
+            for(Location loc : cachedMap.values()) {
+                locationMap.put(loc.getUserId() + "_" + loc.getInsertionTimestamp(), loc);
+            }
+
+            for(Location loc : locations) {
+                locationMap.put(loc.getUserId() + "_" + loc.getInsertionTimestamp(), loc);
+            }
+            String json = gson.toJson(locationMap);
             preferences.edit()
                     .putString(KEY_LOCATIONS, json)
                     .apply();
@@ -37,19 +67,20 @@ public class CacheLocations {
         }
     }
 
-    public List<Location> getCachedLocations() {
+    public Map<String,Location> getCachedLocations() {
+        Map<String,Location> locationMap = new ConcurrentHashMap<>();
         try {
             String json = preferences.getString(KEY_LOCATIONS, null);
             if (json != null) {
-                Type listType = new TypeToken<List<Location>>(){}.getType();
-                List<Location> locations = gson.fromJson(json, listType);
-                Log.d(TAG, "Retrieved " + locations.size() + " cached locations");
-                return locations;
+                Type listType = new TypeToken<Map<String,Location>>(){}.getType();
+                locationMap = gson.fromJson(json, listType);
+                Log.d(TAG, "Retrieved " + locationMap.size() + " cached locations");
+                return locationMap;
             }
         } catch (Exception e) {
             Log.e(TAG, "Error retrieving cached locations", e);
         }
-        return new ArrayList<>();
+        return locationMap;
     }
 
     public void clearCache() {

@@ -56,6 +56,26 @@
 
             </LinearLayout>
 
+            <ImageButton
+                android:id="@+id/btn_info"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_dialog_info"
+                app:tint="@android:color/white"
+                android:contentDescription="App Information"
+                android:layout_marginStart="8dp" />
+
+            <ImageButton
+                android:id="@+id/btn_sign_out"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_lock_power_off"
+                app:tint="@android:color/white"
+                android:contentDescription="Sign Out"
+                android:layout_marginStart="8dp" />
+
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>

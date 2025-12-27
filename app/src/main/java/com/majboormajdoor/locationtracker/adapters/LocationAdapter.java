@@ -13,11 +13,15 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.majboormajdoor.locationtracker.R;
 import com.majboormajdoor.locationtracker.dto.Location;
+import com.majboormajdoor.locationtracker.fragments.CloudFragment;
+import com.majboormajdoor.locationtracker.utils.CacheLocations;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * RecyclerView adapter for displaying location history
@@ -27,8 +31,11 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
     private List<Location> locationList;
     private SimpleDateFormat dateFormat;
 
-    public LocationAdapter() {
+    private CacheLocations cacher;
+
+    public LocationAdapter(Context context) {
         this.locationList = new ArrayList<>();
+        this.cacher = CacheLocations.getInstance(context);
         this.dateFormat = new SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault());
     }
 
@@ -51,11 +58,43 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
         return locationList.size();
     }
 
-    public void updateLocations(List<Location> newLocations) {
+    public void updateLocations(List<Location> newLocations, CloudFragment.ShowContentCallback callback) {
+        this.cacher.cacheLocations(newLocations);
         this.locationList.clear();
-        this.locationList.addAll(newLocations);
+        for (Location loc : this.cacher.getCachedLocations().values()) {
+            this.locationList.add(loc);
+        }
+        this.locationList = this.locationList.stream().sorted((l1, l2) -> {
+            String t1 = l1.getInsertionTimestamp();
+            String t2 = l2.getInsertionTimestamp();
+            if (t1 == null)
+                t1 = "";
+            if (t2 == null)
+                t2 = "";
+            return t2.compareTo(t1);
+        }).collect(Collectors.toList());
+        if (this.locationList.isEmpty()) {
+            callback.showEmptyState();
+        }
         notifyDataSetChanged();
     }
+    public void updateFilteredLocations(List<Location> newLocations, CloudFragment.ShowContentCallback callback) {
+
+        this.locationList = newLocations.stream().sorted((l1, l2) -> {
+            String t1 = l1.getInsertionTimestamp();
+            String t2 = l2.getInsertionTimestamp();
+            if (t1 == null)
+                t1 = "";
+            if (t2 == null)
+                t2 = "";
+            return t2.compareTo(t1);
+        }).collect(Collectors.toList());
+        if (this.locationList.isEmpty()) {
+            callback.showEmptyState();
+        }
+        notifyDataSetChanged();
+    }
+
 
     public void clearLocations() {
         this.locationList.clear();
@@ -77,7 +116,8 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
                 context.startActivity(intent);
             } else {
                 // Fallback to web version of Google Maps
-                String webUri = String.format(Locale.ENGLISH, "https://www.google.com/maps?q=%f,%f", latitude, longitude);
+                String webUri = String.format(Locale.ENGLISH, "https://www.google.com/maps?q=%f,%f", latitude,
+                        longitude);
                 Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(webUri));
                 context.startActivity(webIntent);
             }
@@ -91,6 +131,8 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
         private TextView tvLongitude;
         private TextView tvTimestamp;
 
+        private TextView tvTrackieName;
+
         private Button tvButton;
         private TextView tvEmail;
 
@@ -100,15 +142,14 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
             tvLongitude = itemView.findViewById(R.id.tv_longitude);
             tvTimestamp = itemView.findViewById(R.id.tv_timestamp);
             tvButton = itemView.findViewById(R.id.btn_show_on_map);
+            tvTrackieName = itemView.findViewById(R.id.tv_trackieName);
 
         }
-
-
 
         public void bind(Location location) {
             tvLatitude.setText(String.format(Locale.getDefault(), "Lat: %.6f", location.getLatitude()));
             tvLongitude.setText(String.format(Locale.getDefault(), "Lng: %.6f", location.getLongitude()));
-
+            tvTrackieName.setText(String.format("Trackie Name : %s ", location.getUserName()));
             // Format timestamp if available
             if (location.getInsertionTimestamp() != null && !location.getInsertionTimestamp().isEmpty()) {
                 try {
@@ -117,18 +158,17 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.Locati
                         // Epoch time
                         long timestamp = Long.parseLong(location.getInsertionTimestamp());
                         Date date = new Date(timestamp);
-                        tvTimestamp.setText(dateFormat.format(date));
+                        tvTimestamp.setText(String.format("Time : %s ", date));
                     } else {
                         // ISO format or other string format
-                        tvTimestamp.setText(location.getInsertionTimestamp());
+                        tvTimestamp.setText(String.format("Time : %s ", location.getInsertionTimestamp()));
                     }
                 } catch (Exception e) {
-                    tvTimestamp.setText(location.getInsertionTimestamp());
+                    tvTimestamp.setText(String.format("Time : %s ", location.getInsertionTimestamp()));
                 }
             } else {
                 tvTimestamp.setText("No timestamp");
             }
-
 
             // Set up the "Show on Map" button click listener - THIS WAS MISSING!
             tvButton.setOnClickListener(v -> {

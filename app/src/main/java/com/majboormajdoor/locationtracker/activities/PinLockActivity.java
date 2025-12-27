@@ -42,7 +42,7 @@ public class PinLockActivity extends AppCompatActivity {
 
     private BillingManager billingManager;
 
-    private ApiService apiService = new ApiService();
+    private ApiService apiService;
 
     // State Management
     private enum AuthMode {
@@ -108,31 +108,12 @@ public class PinLockActivity extends AppCompatActivity {
      * Initialize authentication services
      */
     private void initializeServices() {
-        cognitoAuthService = CognitoAuthService.getInstance();
+        apiService = new ApiService(getApplicationContext());
+        cognitoAuthService = CognitoAuthService.getInstance(getApplicationContext());
         googleSignInService = GoogleSignInService.getInstance();
-        apiService = new ApiService();
+        apiService = new ApiService(getApplicationContext());
         billingManager = new BillingManager(this, null);
-        // Initialize Cognito
-        cognitoAuthService.initialize(this, new CognitoAuthService.AuthCallback() {
-            @Override
-            public void onSuccess(String message) {
-                Log.d(TAG, "Cognito initialized: " + message);
-            }
 
-            @Override
-            public void onError(String error) {
-                Log.e(TAG, "Cognito initialization failed: " + error);
-                showError("Authentication service initialization failed");
-            }
-
-            @Override
-            public void onConfirmationRequired(String username) {
-                // Not used for initialization
-            }
-        });
-
-//        // Initialize Google Sign-In
-//        googleSignInService.initialize(this);
     }
 
     /**

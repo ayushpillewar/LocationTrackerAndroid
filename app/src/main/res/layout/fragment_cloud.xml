@@ -11,27 +11,83 @@
         android:id="@+id/header_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
+        android:orientation="vertical"
         android:layout_marginBottom="16dp">
 
-        <TextView
-            android:layout_width="0dp"
+        <!-- Title and Refresh Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Location History"
-            android:textColor="@color/accent_primary"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
 
-        <Button
-            android:id="@+id/btn_refresh"
-            android:layout_width="wrap_content"
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Location History"
+                android:textColor="@color/accent_primary"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btn_refresh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Refresh"
+                android:backgroundTint="@color/accent_primary"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="8dp" />
+
+        </LinearLayout>
+
+        <!-- Date Filter Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Refresh"
-            android:backgroundTint="@color/accent_primary"
-            android:textColor="@android:color/white"
-            android:layout_marginStart="8dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_select_date"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:text="Select Date"
+                android:textSize="14sp"
+                app:icon="@android:drawable/ic_menu_my_calendar"
+                app:iconTint="@android:color/white"
+                app:backgroundTint="@color/accent_primary"
+                app:cornerRadius="8dp"
+                android:textColor="@android:color/white" />
+
+            <TextView
+                android:id="@+id/tv_selected_date"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:text=""
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_clear_filter"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:text="Clear"
+                android:textSize="14sp"
+                app:icon="@android:drawable/ic_menu_close_clear_cancel"
+                app:iconTint="@android:color/white"
+                app:backgroundTint="@color/accent_secondary"
+                app:cornerRadius="8dp"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="8dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

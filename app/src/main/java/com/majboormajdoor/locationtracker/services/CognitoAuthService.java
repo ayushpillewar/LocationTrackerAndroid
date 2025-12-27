@@ -10,6 +10,7 @@ import com.amplifyframework.auth.AuthUserAttribute;
 import com.amplifyframework.auth.AuthUserAttributeKey;
 import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin;
 import com.amplifyframework.auth.cognito.AWSCognitoAuthSession;
+import com.amplifyframework.auth.cognito.result.AWSCognitoAuthSignOutResult;
 import com.amplifyframework.auth.options.AuthSignUpOptions;
 import com.amplifyframework.core.Amplify;
 import com.majboormajdoor.locationtracker.utils.PreferenceManager;
@@ -55,9 +56,26 @@ public class CognitoAuthService {
     /**
      * Get singleton instance
      */
-    public static synchronized CognitoAuthService getInstance() {
+    public static synchronized CognitoAuthService getInstance(Context context) {
         if (instance == null) {
             instance = new CognitoAuthService();
+            instance.initialize(context, new CognitoAuthService.AuthCallback() {
+                @Override
+                public void onSuccess(String message) {
+                    Log.d(TAG, "Cognito initialized: " + message);
+                }
+
+                @Override
+                public void onError(String error) {
+                    Log.e(TAG, "Cognito initialization failed: " + error);
+
+                }
+
+                @Override
+                public void onConfirmationRequired(String username) {
+                    // Not used for initialization
+                }
+            });
         }
         return instance;
     }
@@ -270,19 +288,22 @@ public class CognitoAuthService {
     /**
      * Sign out current user and clear tokens
      */
-//    public void signOut(AuthCallback callback) {
-//        Amplify.Auth.signOut(
-//            result -> {
-//                Log.d(TAG, "Signed out successfully");
-//                clearTokens();
-//                runOnMainThread(() -> callback.onSuccess("Signed out successfully"));
-//            },
-//            error -> {
-//                Log.e(TAG, "Sign out failed", error);
-//                runOnMainThread(() -> callback.onError("Sign out failed: " + error.toString()));
-//            }
-//        );
-//    }
+    public void signOut(AuthCallback callback) {
+        Amplify.Auth.signOut(
+            authSignOutResult -> {
+                if (authSignOutResult instanceof AWSCognitoAuthSignOutResult.CompleteSignOut) {
+                    // Sign Out completed fully and without errors.
+                    Log.i("AuthQuickStart", "Signed out successfully");
+                    callback.onSuccess("Signed out successfully");
+                    clearTokens();
+                }else {
+                    // Sign Out completed with some errors.
+                    Log.i("AuthQuickStart", "Signed out with errors");
+                    callback.onError("Sign out completed with errors");
+                }
+            }
+        );
+    }
 
     /**
      * Reset password

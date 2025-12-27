@@ -81,7 +81,7 @@ public class PreferenceManager {
     /**
      * Save email address
      */
-    public void saveEmailAddress(String emailAddress) {
+    public void saveTrackieName(String emailAddress) {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(AppConstants.PREF_EMAIL_ADDRESS, emailAddress);
         editor.apply();
@@ -90,7 +90,7 @@ public class PreferenceManager {
     /**
      * Get saved email address
      */
-    public String getEmailAddress() {
+    public String getTrackieName() {
         return sharedPreferences.getString(AppConstants.PREF_EMAIL_ADDRESS, "");
     }
 
