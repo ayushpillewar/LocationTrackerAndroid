@@ -10,8 +10,8 @@ android {
         applicationId = "com.majboormajdoor.locationtracker"
         minSdk = 24
         targetSdk = 35
-        versionCode = 14
-        versionName = "14"
+        versionCode = 15
+        versionName = "15"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
